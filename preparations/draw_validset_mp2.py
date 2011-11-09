@@ -203,7 +203,7 @@ def save_trainset(users, users_rs, users_validset, Man) :
 	for user, bounds in users.items() :
 		j, l = bounds[:]
 		trainset[user] = array.array('I')
-		validset = users_validset[user]
+		validset = users_validset.get(user, {})
 		val_hir = [item for item, r in validset.items() if r == 1]
 		while (j <= l) :
 			if (users_rs[j] not in val_hir) :
