@@ -200,14 +200,12 @@ def save_trainset(users, users_rs, users_validset, Man) :
 	users, users_rs[:] = [el for el in users_info]
 	
 	trainset = {}
-	for user, validset in users_validset.items() :
-		val_hir = [item for item, r in validset.items() if r == 1]
-		
+	for user, bounds in users :
+		j, l = bounds[:]
 		trainset[user] = array.array('I')
-		j = users[user][0]
-		l = users[user][1]
+		val_hir = [item for item, r in validset.items() if r == 1]
 		while (j <= l) :
-			if (users_rs[j] not in val_hir) : 
+			if (users_rs[j] not in val_hir) :
 				trainset[user].append(users_rs[j])
 				trainset[user].append(users_rs[j+1])
 			j += 2
