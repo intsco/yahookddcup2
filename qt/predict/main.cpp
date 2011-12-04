@@ -150,7 +150,7 @@ double estimate(RsHash valid, QString valid_fn) {
     int n = 0, u = 0, i = 0, real_r = 0, pred_r = 0;
 
     // comparing prediction results and real data from the file
-    QFile file(valid_fn);
+    QFile file(valid_fn + ".txt");
     file.open(QFile::ReadOnly);
     QTextStream in(&file);
     while (!in.atEnd()) {
