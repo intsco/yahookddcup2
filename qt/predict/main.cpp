@@ -31,8 +31,9 @@ RsHash load_trainset(QString fileName, int set) {
                     r = list.at(1).toInt();
                 users_rs[u].insert(i, r);
             }
-            file.close();
         }
+        file.close();
+
         // serialization
         binfile.open(QFile::WriteOnly);
         QDataStream bin(&binfile);
