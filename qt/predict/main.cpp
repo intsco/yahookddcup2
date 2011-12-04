@@ -3,7 +3,7 @@
 RsHash load_trainset(QString fileName, int set) {
     printf("Start loading set from %s ...", qPrintable(fileName));
 
-    RsHash users_rs = new QHash<int, QHash<int, float>* >();
+    RsHash users_rs;
 
     QFile file(fileName);
     file.open(QFile::ReadOnly);
@@ -16,8 +16,8 @@ RsHash load_trainset(QString fileName, int set) {
         if (line.contains('|')) {
             list = line.split('|');
             u = list.at(0).toInt();
-            QHash<int, float> *rs = new QHash<int, float>();
-            users_rs->insert(u, rs);
+            QHash<int, float> rs;
+            users_rs.insert(u, rs);
         }
         else {
             list = line.split('\t');
@@ -26,7 +26,7 @@ RsHash load_trainset(QString fileName, int set) {
                 r = 0;
             else
                 r = list.at(1).toInt();
-            (*users_rs)[u]->insert(i, r);
+            (users_rs)[u].insert(i, r);
         }
 
 //        printf(qPrintable(line+'\n'));
@@ -38,37 +38,37 @@ RsHash load_trainset(QString fileName, int set) {
 }
 
 TaxHash load_tracks(QString tracks_fn) {
-    printf("Start loading tracks ...\n");
+    printf("Start loading tracks ... ");
 
-    TaxHash tracks = new QHash<int, QVector<int>* >();
+    TaxHash tracks;
     QFile file(tracks_fn);
     file.open(QFile::ReadOnly);
     QTextStream in(&file);
     while (!in.atEnd()) {
         QStringList list = in.readLine().split("|");
-        QVector<int>* track_tax = new QVector<int>();
+        QVector<int> track_tax;
         for (int j = 1; j < list.size(); j++) {
             int el = 0;
             if (list[j] == "None")
                 el = -1;
             else
                 el = list[j].toInt();
-            track_tax->append(el);
+            track_tax.append(el);
         }
-        tracks->insert(list[0].toInt(), track_tax);
+        tracks.insert(list[0].toInt(), track_tax);
     }
     file.close();
     printf("OK\n");
     return tracks;
 }
 
-void release_set(RsHash users_rs) {
+/*void release_set(RsHash users_rs) {
     // deleting train set
     printf("deleting set... ");
-    RsHashIter i2(*users_rs);
+    RsHashIter i2(users_rs);
     while (i2.hasNext()) {
         i2.next();
-        //printf("deleting %d user %d rs...", i2.key(), i2.value()->size());
+        //printf("deleting %d user %d rs...", i2.key(), i2.value().size());
         delete i2.value();
         //printf("Ok");
     }
@@ -79,16 +79,16 @@ void release_set(RsHash users_rs) {
 void release_tracks(TaxHash tracks) {
     // deleting tracks
     printf("deleting tracks... ");
-    QHashIterator<int, QVector<int>* > i2(*tracks);
+    QHashIterator<int, QVector<int> > i2(tracks);
     while (i2.hasNext()) {
         i2.next();
-        //printf("deleting %d user %d rs...", i2.key(), i2.value()->size());
+        //printf("deleting %d user %d rs...", i2.key(), i2.value().size());
         delete i2.value();
         //printf("Ok");
     }
     delete tracks;
     printf("OK\n");
-}
+}*/
 
 struct prev {
     bool operator()(QPair<int, float> const &a, QPair<int, float> const &b) const {
@@ -116,14 +116,19 @@ double estimate(RsHash valid, QString valid_fn) {
     printf("Estimating prediction results...\n");
 
     // iterate through users
-    RsHashIter it(*valid);
+    RsHashIterMut it(valid);
     while (it.hasNext()) {
         it.next();
+
+        /*QHash<int, float>::const_iterator iter;
+        for (iter = it.value().begin(); iter != it.value().end(); ++iter)
+            printf("%d  %f\n", iter.key(), iter.value());*/
+
         // classifing predictions into 2 groups
-        QVector<QPair<int, float> > sort_items = get_sorted_items(*(it.value()));
+        QVector<QPair<int, float> > sort_items = get_sorted_items(it.value());
         for (int j = 0; j < 3; j++) {
             int i = sort_items[j].first;
-            it.value()->insert(i, -1);
+            it.value().insert(i, -1);
         }
     }
 
@@ -145,7 +150,7 @@ double estimate(RsHash valid, QString valid_fn) {
             list = line.split("\t");
             i = list[0].toInt();
             real_r = list[1].toInt();
-            pred_r = (*(*valid)[u])[i];
+            pred_r = ((valid)[u])[i];
             if (real_r >= 0) real_r = 1;
             if (pred_r >= 0) pred_r = 1;
             if (real_r != pred_r) {
@@ -160,8 +165,7 @@ double estimate(RsHash valid, QString valid_fn) {
     return err;
 }
 
-float* get_alb_art_avg_r(QHash<int, float> u_rs, TaxHash tracks, int alb, int art) {
-    float avg_art_r = 0, avg_alb_r = 0;
+void get_alb_art_avg_r(QHash<int, float> u_rs, TaxHash tracks, int alb, int art, float &avg_alb_r, float &avg_art_r) {
     int art_r_n = 0, alb_r_n = 0;
 
     QHashIterator<int, float> it(u_rs);
@@ -169,12 +173,12 @@ float* get_alb_art_avg_r(QHash<int, float> u_rs, TaxHash tracks, int alb, int ar
         it.next();
         int i = it.key();
         int r = it.value();
-        if (tracks->contains(i)) { // TODO: use not only tracks ratings
-            if(tracks->value(i)->at(0) == alb) {
+        if (tracks.contains(i)) { // TODO: use not only tracks ratings
+            if(tracks.value(i).at(0) == alb) {
                 avg_alb_r += r;
                 alb_r_n++;
             }
-            if(tracks->value(i)->at(1) == art) {
+            if(tracks.value(i).at(1) == art) {
                 avg_art_r += r;
                 art_r_n++;
             }
@@ -184,53 +188,52 @@ float* get_alb_art_avg_r(QHash<int, float> u_rs, TaxHash tracks, int alb, int ar
         avg_alb_r /= alb_r_n;
     if (art_r_n > 0)
         avg_art_r /= art_r_n;
-
-    float* avg_r = new float[2];
-    avg_r[0] = avg_alb_r;
-    avg_r[1] = avg_art_r;
-    return avg_r;
 }
 
-void predict(RsHash train, RsHash valid, TaxHash tracks) {
+void predict(RsHash train, RsHash &valid, TaxHash tracks) {
     printf("Predicting users ratings... ");
     // iterate through users (valid)
-    RsHashIter it(*valid);
+    RsHashIterMut it(valid);
     while (it.hasNext()) {
         it.next();
         int u = it.key();
         // iterate through user ratings
-        QHashIterator<int, float> it2(*(it.value()));
+        QMutableHashIterator<int, float> it2(it.value());
         while (it2.hasNext()) {
             int art = 0, alb = 0, art_r = 0, alb_r =0, i = 0;
             it2.next();
 
             i = it2.key();
-            art = tracks->value(i)->at(1);
-            alb = tracks->value(i)->at(0);
-            if (train->value(u)->contains(art)) {
-                art_r = train->value(u)->value(art);
+            art = tracks.value(i).at(1);
+            alb = tracks.value(i).at(0);
+            if (train.value(u).contains(art)) {
+                art_r = train.value(u).value(art);
             }
-            if (train->value(u)->contains(alb)) {
-                alb_r = train->value(u)->value(alb);
+            if (train.value(u).contains(alb)) {
+                alb_r = train.value(u).value(alb);
             }
 
-            float *alb_art_avr_r = get_alb_art_avg_r(*(train->value(u)), tracks, alb, art);
+            float alb_avr_r = 0, art_avr_r = 0;
+            get_alb_art_avg_r(train.value(u), tracks, alb, art, alb_avr_r, art_avr_r);
 
-            valid->value(u)->insert(i, art_r + alb_r + alb_art_avr_r[0] + alb_art_avr_r[1]);
+            it2.value() = art_r + alb_r + alb_avr_r + art_avr_r;
+            //printf("%d %d %f\n", u, i, valid[u][i]);
         }
     }
     printf("OK\n");
 }
 
-int main(int argc, char *argv[]) {
-    QCoreApplication a(argc, argv);
-    QCoreApplication::setApplicationName("YahooKDDCup Prediction");
+int main(int argc, char argv[]) {
+//    QCoreApplication a(argc, argv);
+//    QCoreApplication::setApplicationName("YahooKDDCup Prediction");
 
     printf("Start prediction\n");
 
-    QString train_file = "../../../train_sample.txt";
-    QString valid_file = "../../../valid_sample.txt";
-    QString tracks_file = "../../../_trackData.txt";
+    Sleep(3000);
+
+    QString train_file = "../../train_sample.txt";
+    QString valid_file = "../../valid_sample.txt";
+    QString tracks_file = "../../_trackData.txt";
 
     RsHash train = load_trainset(train_file, TRAIN);
     RsHash valid = load_trainset(valid_file, VALID);
@@ -240,12 +243,12 @@ int main(int argc, char *argv[]) {
 
     estimate(valid, valid_file);
 
-    release_set(train);
+    /*release_set(train);
     release_set(valid);
-    release_tracks(tracks);
+    release_tracks(tracks);*/
 
     printf("Prediction finished\n");
-    return a.exec();
+//    return a.exec();
 }
 
 
