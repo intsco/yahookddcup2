@@ -228,8 +228,8 @@ int main(int argc, char argv[]) {
 //    QCoreApplication::setApplicationName("YahooKDDCup Prediction");
 
     printf("Start prediction\n");
-
-    Sleep(3000);
+    QTime myTimer;
+    myTimer.start();
 
     QString train_file = "../../train_sample.txt";
     QString valid_file = "../../valid_sample.txt";
@@ -247,7 +247,7 @@ int main(int argc, char argv[]) {
     release_set(valid);
     release_tracks(tracks);*/
 
-    printf("Prediction finished\n");
+    printf("Prediction finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
 //    return a.exec();
 }
 

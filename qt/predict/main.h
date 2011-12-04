@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <stdlib.h>
-#include <Windows.h>
 
 #include <QtCore/QCoreApplication>
 #include <QHash>
@@ -12,6 +11,7 @@
 #include <QStringList>
 #include <QVector>
 #include <QPair>
+#include <QTime>
 
 #define TRAIN 0
 #define VALID 1
