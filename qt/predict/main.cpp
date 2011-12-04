@@ -237,9 +237,9 @@ void predict(RsHash train, RsHash &valid, TaxHash tracks) {
     printf("OK\n");
 }
 
-int main(int argc, char argv[]) {
-//    QCoreApplication a(argc, argv);
-//    QCoreApplication::setApplicationName("YahooKDDCup Prediction");
+int main(int argc, char *argv[]) {
+    QCoreApplication a(argc, argv);
+    QCoreApplication::setApplicationName("YahooKDDCup2 Prediction");
 
     Sleep(3000);
 
@@ -264,7 +264,7 @@ int main(int argc, char argv[]) {
     release_tracks(tracks);*/
 
     printf("Prediction finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
-//    return a.exec();
+    return a.exec();
 }
 
 
