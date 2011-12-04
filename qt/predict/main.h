@@ -3,7 +3,9 @@
 
 #include <algorithm>
 #include <stdlib.h>
+#include <windows.h>
 
+#include <qwaitcondition.h>
 #include <QtCore/QCoreApplication>
 #include <QHash>
 #include <QFile>

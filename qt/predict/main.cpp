@@ -5,34 +5,48 @@ RsHash load_trainset(QString fileName, int set) {
 
     RsHash users_rs;
 
-    QFile file(fileName);
-    file.open(QFile::ReadOnly);
-    QTextStream in(&file);
+    QFile binfile(fileName + ".bin");
+    if (!binfile.exists()) {
+        QFile file(fileName + ".txt");
+        file.open(QFile::ReadOnly);
+        QTextStream in(&file);
 
-    int u = 0, i = 0, r = 0;
-    QStringList list;
-    while (!in.atEnd()) {
-        QString line = in.readLine();
-        if (line.contains('|')) {
-            list = line.split('|');
-            u = list.at(0).toInt();
-            QHash<int, float> rs;
-            users_rs.insert(u, rs);
+        int u = 0, i = 0, r = 0;
+        QStringList list;
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            printf(qPrintable(line+'\n'));
+            if (line.contains('|')) {
+                list = line.split('|');
+                u = list.at(0).toInt();
+                QHash<int, float> rs;
+                users_rs.insert(u, rs);
+            }
+            else {
+                list = line.split('\t');
+                i = list.at(0).toInt();
+                if (set == VALID)
+                    r = 0;
+                else
+                    r = list.at(1).toInt();
+                users_rs[u].insert(i, r);
+            }
+            file.close();
         }
-        else {
-            list = line.split('\t');
-            i = list.at(0).toInt();
-            if (set == VALID)
-                r = 0;
-            else
-                r = list.at(1).toInt();
-            (users_rs)[u].insert(i, r);
-        }
-
-//        printf(qPrintable(line+'\n'));
+        // serialization
+        binfile.open(QFile::WriteOnly);
+        QDataStream bin(&binfile);
+        bin << users_rs;
+        binfile.close();
+    }
+    else {
+        // deserialization
+        binfile.open(QFile::ReadOnly);
+        QDataStream bin(&binfile);
+        bin >> users_rs;
+        binfile.close();
     }
 
-    file.close();
     printf("OK\n");
     return users_rs;
 }
@@ -227,12 +241,14 @@ int main(int argc, char argv[]) {
 //    QCoreApplication a(argc, argv);
 //    QCoreApplication::setApplicationName("YahooKDDCup Prediction");
 
+    Sleep(3000);
+
     printf("Start prediction\n");
     QTime myTimer;
     myTimer.start();
 
-    QString train_file = "../../train_sample.txt";
-    QString valid_file = "../../valid_sample.txt";
+    QString train_file = "../../train_sample";
+    QString valid_file = "../../valid_sample";
     QString tracks_file = "../../_trackData.txt";
 
     RsHash train = load_trainset(train_file, TRAIN);
