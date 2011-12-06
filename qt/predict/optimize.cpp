@@ -25,7 +25,7 @@ void optimize(RsHash train, RsHash &valid, QString valid_file, TaxHash tracks) {
     }
     while (err > errThr && alfa <= alfa_h);
 
-    printf("OK. Best result: alfa = %d  err = %3.4f\n",best_alfa, minerr);
+    printf("OK. Best result: alfa = %d  err = %3.4f\n", best_alfa, minerr*100);
 }
 
 
