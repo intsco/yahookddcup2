@@ -85,14 +85,12 @@ int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("YahooKDDCup2 Prediction");
 
-//    Sleep(3000);
-
     printf("Start prediction\n");
     QTime myTimer;
     myTimer.start();
 
-    QString train_file = "../../train_sample";
-    QString valid_file = "../../valid_sample";
+    QString train_file = "../../train";
+    QString valid_file = "../../valid";
     QString tracks_file = "../../_trackData.txt";
 
     RsHash train = load_trainset(train_file, TRAIN);
