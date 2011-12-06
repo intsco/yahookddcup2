@@ -1,0 +1,28 @@
+#ifndef MAIN_H
+#define MAIN_H
+
+#include <algorithm>
+#include <stdlib.h>
+#include <windows.h>
+
+#include <QtGlobal>
+
+#include <qwaitcondition.h>
+#include <QtCore/QCoreApplication>
+#include <QHash>
+#include <QFile>
+#include <QTextStream>
+#include <QStringList>
+#include <QVector>
+#include <QPair>
+#include <QTime>
+
+#define TRAIN 0
+#define VALID 1
+
+typedef QHash<int, QHash<int, float> > RsHash;
+typedef QHashIterator<int, QHash<int, float> > RsHashIter;
+typedef QMutableHashIterator<int, QHash<int, float> > RsHashIterMut;
+typedef QHash<int, QVector<int> > TaxHash;
+
+#endif // MAIN_H

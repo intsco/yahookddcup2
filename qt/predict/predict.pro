@@ -15,8 +15,24 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    content_pred.cpp \
+    optimize.cpp \
+    estimate.cpp
 
 HEADERS += \
-    main.h
+    content_pred.h \
+    core.h \
+    main.h \
+    optimize.h \
+    estimate.h
+
+
+
+
+
+
+
+
+
 
