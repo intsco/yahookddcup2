@@ -1,5 +1,6 @@
 #include "main.h"
 #include "content_pred.h"
+#include "itemnn_pred.h"
 #include "optimize.h"
 
 
@@ -95,12 +96,16 @@ int main(int argc, char *argv[]) {
 
     RsHash train = load_trainset(train_file, TRAIN);
     RsHash valid = load_trainset(valid_file, VALID);
-    TaxHash tracks = load_tracks(tracks_file);
+//    TaxHash tracks = load_tracks(tracks_file);
 
 //    predict(train, valid, tracks);
 //    estimate(valid, valid_file);
 
-    optimize(train, valid, valid_file, tracks);
+    itemnn_pred::study(train, true);
+//    itemnn_pred::predict(train, valid, 0, true);
+
+//    optimize(train, valid, valid_file, tracks);
+
 
     printf("Prediction finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
     return a.exec();

@@ -15,7 +15,7 @@ void optimize(RsHash train, RsHash &valid, QString valid_file, TaxHash tracks) {
     do {
         alfa++;
         n++;
-        predict(train, valid, tracks, alfa, false);
+        content_pred::predict(train, valid, tracks, alfa, false);
         err = estimate(valid, valid_file, false);
         printf("n = %d  alfa = %d   err = %3.4f\n", n, alfa, err*100);
         if (err < minerr) {
