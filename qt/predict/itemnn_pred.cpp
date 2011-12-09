@@ -85,7 +85,7 @@ void itemnn_pred::study(RsHash train, bool verbose) {
             k++;
         }
 
-        printf("%3.3f %% complited\r", float(n)/items_n);
+        printf("%3.6f %% complited\r", float(n)/items_n);
         n++;
     }
     if (verbose) printf("OK\n");
