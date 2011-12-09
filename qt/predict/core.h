@@ -16,6 +16,9 @@
 #include <QVector>
 #include <QPair>
 #include <QTime>
+#include <QSet>
+#include <QSetIterator>
+#include <QtAlgorithms>
 
 #define TRAIN 0
 #define VALID 1

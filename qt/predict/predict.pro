@@ -18,14 +18,20 @@ TEMPLATE = app
 SOURCES += main.cpp \
     content_pred.cpp \
     optimize.cpp \
-    estimate.cpp
+    estimate.cpp \
+    itemnn_pred.cpp
 
 HEADERS += \
     content_pred.h \
     core.h \
     main.h \
     optimize.h \
-    estimate.h
+    estimate.h \
+    itemnn_pred.h
+
+
+
+
 
 
 

@@ -25,7 +25,7 @@ void get_alb_art_avg_r(QHash<int, float> u_rs, TaxHash tracks, int alb, int art,
         avg_art_r /= art_r_n;
 }
 
-void predict(RsHash train, RsHash &valid, TaxHash tracks, float param, bool verbose) {
+void content_pred::predict(RsHash train, RsHash &valid, TaxHash tracks, float param, bool verbose) {
     if (verbose) printf("Predicting users ratings... ");
 
     // track without taxonomy info default rating
