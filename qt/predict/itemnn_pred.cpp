@@ -1,6 +1,6 @@
 #include "itemnn_pred.h"
 
-QHash<QPair<int, int>, float> items_neighbors;
+QHash<QPair<int, int>, float> i2i_weights;
 
 struct next_less {
     bool operator()(QPair<int, float> const &a, QPair<int, float> const &b) const {
@@ -11,90 +11,102 @@ struct next_less {
 void itemnn_pred::study(RsHash train, bool verbose) {
     if (verbose) printf("Studing item NN ...\n");
 
-    if (verbose) printf("Preparing items users sets ...\n");
-    // prepare items users sets
-    QHash<int, QSet<int> > items_users_set;
-    RsHashIter it(train);
-    while(it.hasNext()) {
-        it.next();
-        int u = it.key();
-        QHashIterator<int, float> iit(it.value());
-        while(iit.hasNext()) {
-            iit.next();
-            int i = iit.key();
-            if (!items_users_set.contains(i)) {
-                QSet<int> users;
-                users.insert(u);
-                items_users_set.insert(i, users);
-            }
-            else {
-                items_users_set[i].insert(u);
-            }
-        }
-    }
-    if (verbose) printf("OK\n");
+    QFile binfile("i2i_weights.bin");
+    if (!binfile.exists()) {
 
-    // calculating weights
-    if (verbose) printf("Calculating item to item weights ...\n");
-    QList<int> items = items_users_set.keys();
-    qSort(items);
-    int items_n = items.count();
-    int n = 0;
-    while(n < items_n) {
-
-        // calculate weights
-        int i = items[n];
-        QSet<int> iset = items_users_set[i];
-        QVector<QPair<int, float> > i_neighb;
-        int n2 = n + 1;
-        while (n2 < items_n) {
-            int j = items[n2];
-            QSet<int> jset = items_users_set[j];
-            float ij_intersect = iset.intersect(jset).size();
-            if (ij_intersect > 0) {
-                float w = ij_intersect / iset.unite(jset).size();
-                //printf("%d  %d   %2.4f\n", i, j, w);
-                if (w > 0.5) {
-                    QPair<int, float> pair;
-                    pair.first = j;
-                    pair.second = w;
-                    i_neighb.append(pair);
+        if (verbose) printf("Preparing items users sets ...\n");
+        // prepare items users sets
+        QHash<int, QSet<int> > items_users_set;
+        RsHashIter it(train);
+        while(it.hasNext()) {
+            it.next();
+            int u = it.key();
+            QHashIterator<int, float> iit(it.value());
+            while(iit.hasNext()) {
+                iit.next();
+                int i = iit.key();
+                if (!items_users_set.contains(i)) {
+                    QSet<int> users;
+                    users.insert(u);
+                    items_users_set.insert(i, users);
+                }
+                else {
+                    items_users_set[i].insert(u);
                 }
             }
-            n2++;
         }
 
-        // sort and shrink to N neighbors
-        std::sort(i_neighb.begin(), i_neighb.end(), next_less()); // sort in descending order by weights
-        QVector<QPair<int, float> > tmp_i_neighb;
-        int k = 0, n = 20;
-        if (i_neighb.size() < 20) n = i_neighb.size();
-        while(k < n) {
-            tmp_i_neighb.append(i_neighb[k]);
-            k++;
-        }
-        i_neighb = tmp_i_neighb;
+        // calculating weights
+        if (verbose) printf("Calculating item to item weights ...\n");
+        QList<int> items = items_users_set.keys();
+        qSort(items);
+        int items_n = items.count();
+        int n = 0;
+        while(n < items_n) {
 
-        // append to the items_neighbors hash
-        k = 0;
-        while(k < n) {
-            QPair<int, int> pair;
-            pair.first = i;
-            pair.second = i_neighb[k].first;
-            items_neighbors.insert(pair, i_neighb[k].second);
-            k++;
+            // calculate weights
+            int i = items[n];
+            QSet<int> iset = items_users_set[i];
+            QVector<QPair<int, float> > i_neighb;
+            int n2 = n + 1;
+            while (n2 < items_n) {
+                int j = items[n2];
+                QSet<int> jset = items_users_set[j];
+                float ij_intersect = iset.intersect(jset).size();
+                if (ij_intersect > 0) {
+                    float w = ij_intersect / iset.unite(jset).size();
+                    //printf("%d  %d   %2.4f\n", i, j, w);
+                    if (w > 0.5) {
+                        QPair<int, float> pair;
+                        pair.first = j;
+                        pair.second = w;
+                        i_neighb.append(pair);
+                    }
+                }
+                n2++;
+            }
+
+            // sort and shrink to N neighbors
+            std::sort(i_neighb.begin(), i_neighb.end(), next_less()); // sort in descending order by weights
+            QVector<QPair<int, float> > tmp_i_neighb;
+            int k = 0, neighb_n = 20;
+            if (i_neighb.size() < 20) neighb_n = i_neighb.size();
+            while(k < neighb_n) {
+                tmp_i_neighb.append(i_neighb[k]);
+                k++;
+            }
+            i_neighb = tmp_i_neighb;
+
+            // append to the items_neighbors hash
+            k = 0;
+            while(k < neighb_n) {
+                QPair<int, int> pair;
+                pair.first = i;
+                pair.second = i_neighb[k].first;
+                i2i_weights.insert(pair, i_neighb[k].second);
+                k++;
+            }
+            if (n % 100 == 0) printf("%d items processed  %f %% complited\r", n, float(n)/items_n*100);
+            n++;
         }
 
-        printf("%3.6f %% complited\r", float(n)/items_n);
-        n++;
+        // serialization item to item weights
+        printf("Saving to bin file...\n");
+        binfile.open(QFile::WriteOnly);
+        QDataStream bin(&binfile);
+        bin << i2i_weights;
+        binfile.close();
     }
-    if (verbose) printf("OK\n");
+    else {
+        // deserialization item to item weights
+        printf("Loading from bin file...\n");
+        binfile.open(QFile::ReadOnly);
+        QDataStream bin(&binfile);
+        bin >> i2i_weights;
+        binfile.close();
+    }
 
     if (verbose) printf("OK\n");
-    /*QSetIterator<int> iter(items_users_set[3091]);
-    while (iter.hasNext()){
-        printf("%d\t", iter.next());
-    }*/
 }
 
 void itemnn_pred::predict(RsHash train, RsHash &valid, float params, bool verbose) {
