@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <stdlib.h>
 //#include <windows.h>
+#include <omp.h>
 
 #include <QtGlobal>
 

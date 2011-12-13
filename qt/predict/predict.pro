@@ -12,8 +12,11 @@ TARGET = predict
 CONFIG   += console
 CONFIG   -= app_bundle
 
+QMAKE_CXXFLAGS += -fopenmp
+
 TEMPLATE = app
 
+LIBS += -lgomp
 
 SOURCES += main.cpp \
     content_pred.cpp \
