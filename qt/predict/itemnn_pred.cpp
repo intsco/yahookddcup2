@@ -42,56 +42,59 @@ void itemnn_pred::study(RsHash train, bool verbose) {
         qSort(items);
         int items_n = items.count();
 
+        int items_processed = 0;
 #pragma omp parallel for
-            for(int n = 0; n < items_n; n++) {
+        for(int n = 0; n < items_n; n++) {
 
-                // calculate weights
-                int i = items[n];
-                QSet<int> iset = items_users_set[i];
-                QVector<QPair<int, float> > i_neighb;
-                int n2 = n + 1;
-                while (n2 < items_n) {
-                    int j = items[n2];
-                    QSet<int> jset = items_users_set[j];
-                    float ij_intersect = iset.intersect(jset).size();
-                    if (ij_intersect > 0) {
-                        float w = ij_intersect / iset.unite(jset).size();
-                        //printf("%d  %d   %2.4f\n", i, j, w);
-                        if (w > 0.5) {
-                            QPair<int, float> pair;
-                            pair.first = j;
-                            pair.second = w;
-                            i_neighb.append(pair);
-                        }
+            // calculate weights
+            int i = items[n];
+            QSet<int> iset = items_users_set[i];
+            QVector<QPair<int, float> > i_neighb;
+            int n2 = n + 1;
+            while (n2 < items_n) {
+                int j = items[n2];
+                QSet<int> jset = items_users_set[j];
+                float ij_intersect = iset.intersect(jset).size();
+                if (ij_intersect > 0) {
+                    float w = ij_intersect / iset.unite(jset).size();
+                    //printf("%d  %d   %2.4f\n", i, j, w);
+                    if (w > 0.3) {
+                        QPair<int, float> pair;
+                        pair.first = j;
+                        pair.second = w;
+                        i_neighb.append(pair);
                     }
-                    n2++;
                 }
-
-                // sort and shrink to N neighbors
-                std::sort(i_neighb.begin(), i_neighb.end(), next_less()); // sort in descending order by weights
-                QVector<QPair<int, float> > tmp_i_neighb;
-                int k = 0, neighb_n = 20;
-                if (i_neighb.size() < 20) neighb_n = i_neighb.size();
-                while(k < neighb_n) {
-                    tmp_i_neighb.append(i_neighb[k]);
-                    k++;
-                }
-                i_neighb = tmp_i_neighb;
-
-                // append to the items_neighbors hash
-                k = 0;
-                while(k < neighb_n) {
-                    QPair<int, int> pair;
-                    pair.first = i;
-                    pair.second = i_neighb[k].first;
-                    i2i_weights.insert(pair, i_neighb[k].second);
-                    k++;
-                }
-#pragma omp critical
-                {
-                    if (n % 100 == 0) printf("%d items processed  %f %% complited\r", n, float(n)/items_n*100);
-                }
+                n2++;
             }
+
+            // sort and shrink to N neighbors
+            std::sort(i_neighb.begin(), i_neighb.end(), next_less()); // sort in descending order by weights
+            QVector<QPair<int, float> > tmp_i_neighb;
+            int k = 0, neighb_n = 100;
+            if (i_neighb.size() < neighb_n) neighb_n = i_neighb.size();
+            while(k < neighb_n) {
+                tmp_i_neighb.append(i_neighb[k]);
+                k++;
+            }
+            i_neighb = tmp_i_neighb;
+
+            // append to the items_neighbors hash
+            k = 0;
+            while(k < neighb_n) {
+                QPair<int, int> pair;
+                pair.first = i;
+                pair.second = i_neighb[k].first;
+                i2i_weights.insert(pair, i_neighb[k].second);
+                k++;
+            }
+#pragma omp critical
+            {
+                items_processed++;
+                if (n % 100 == 0)
+                    printf("%d items processed  %f %% complited\r", n, float(items_processed)/items_n*100);
+            }
+        }
 
         // serialization item to item weights
         printf("Saving to bin file...\n");
