@@ -101,8 +101,9 @@ int main(int argc, char *argv[]) {
 //    predict(train, valid, tracks);
 //    estimate(valid, valid_file);
 
-    itemnn_pred::study(train, true);
-//    itemnn_pred::predict(train, valid, 0, true);
+    itemnn_pred::study(train, true);    
+    itemnn_pred::predict(train, valid, 0, true);
+    estimate(valid, valid_file, true);
 
 //    optimize(train, valid, valid_file, tracks);
 

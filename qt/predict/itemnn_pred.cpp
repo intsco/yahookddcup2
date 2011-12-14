@@ -71,7 +71,7 @@ void itemnn_pred::study(RsHash train, bool verbose) {
             // sort and shrink to N neighbors
             std::sort(i_neighb.begin(), i_neighb.end(), next_less()); // sort in descending order by weights
             QVector<QPair<int, float> > tmp_i_neighb;
-            int k = 0, neighb_n = 100;
+            int k = 0, neighb_n = 50;
             if (i_neighb.size() < neighb_n) neighb_n = i_neighb.size();
             while(k < neighb_n) {
                 tmp_i_neighb.append(i_neighb[k]);
@@ -85,14 +85,17 @@ void itemnn_pred::study(RsHash train, bool verbose) {
                 QPair<int, int> pair;
                 pair.first = i;
                 pair.second = i_neighb[k].first;
-                i2i_weights.insert(pair, i_neighb[k].second);
+#pragma omp critical
+                {
+                    i2i_weights.insert(pair, i_neighb[k].second);
+                }
                 k++;
             }
 #pragma omp critical
             {
                 items_processed++;
                 if (n % 100 == 0)
-                    printf("%d items processed  %f %% complited\r", n, float(items_processed)/items_n*100);
+                    printf("%d items processed  %f %% complited\r", items_processed, float(items_processed)/items_n*100);
             }
         }
 
@@ -112,7 +115,13 @@ void itemnn_pred::study(RsHash train, bool verbose) {
         binfile.close();
     }
 
-    if (verbose) printf("OK\n");
+    /*QHashIterator<QPair<int, int>, float> iter(i2i_weights);
+    while(iter.hasNext()) {
+        iter.next();
+        printf("%d  %d  %f\n", iter.key().first, iter.key().second, iter.value());
+    }*/
+
+    if (verbose) printf("OK %d items * N neighbours loaded\n", i2i_weights.size());
 }
 
 void itemnn_pred::predict(RsHash train, RsHash &valid, float params, bool verbose) {
@@ -125,32 +134,34 @@ void itemnn_pred::predict(RsHash train, RsHash &valid, float params, bool verbos
         vit.next();
         n++;
         int u = vit.key();
-        QHash<int, float> urs = train[u];
+        QHash<int, float> u_rs = train[u]; // user's ratings
         // iterate through user ratings
         QMutableHashIterator<int, float> iit(vit.value());
         while (iit.hasNext()) {
             iit.next();
             int i = iit.key();
-            /*QSet<int> iset = items_users_set[i];
 
-            // compute rating as weighted sum of neighbors
+            // compute rating as weighted sum of neighbours
             float r = 0;
-            QHashIterator<int, float> it(urs);
+            QHashIterator<int, float> it(u_rs);
             while(it.hasNext()) {
                 it.next();
-                int ti = it.key();
-                float tr = it.value();
-                QSet<int> tiset = items_users_set[ti];
+                int j = it.key();
+                float jr = it.value();
+                QPair<int, int> pair;
+                pair.first = i;
+                pair.second = j;
+                float w = i2i_weights[pair];
 
-                r += w * (1 + tr);
+                r += w * (1 + jr);
             }
 
-            iit.value() = r;*/
+            iit.value() = r;
             //printf("%d %d %f\n", u, i, valid[u][i]);
         }
-        printf("%3.3f %% complited\r", float(n)/users_n);
+        printf("%3.3f %% complited\r", float(n) / users_n * 100);
     }
-    if (verbose) printf("OK\n");
+    if (verbose) printf("\nOK\n");
 }
 
 
