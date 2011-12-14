@@ -13,10 +13,10 @@ CONFIG   += console
 CONFIG   -= app_bundle
 
 QMAKE_CXXFLAGS += -fopenmp
+LIBS += -lgomp
 
 TEMPLATE = app
 
-LIBS += -lgomp
 
 SOURCES += main.cpp \
     content_pred.cpp \

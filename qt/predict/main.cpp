@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("YahooKDDCup2 Prediction");
 
-//    Sleep(3000);
+    Sleep(3000);
 
     printf("Start prediction\n");
     QTime myTimer;
@@ -103,8 +103,9 @@ int main(int argc, char *argv[]) {
 //    predict(train, valid, tracks);
 //    estimate(valid, valid_file);
 
-    itemnn_pred::study(train, true);
-//    itemnn_pred::predict(train, valid, 0, true);
+    itemnn_pred::study(train, true);    
+    itemnn_pred::predict(train, valid, 0, true);
+    estimate(valid, valid_file, true);
 
 //    optimize(train, valid, valid_file, tracks);
 

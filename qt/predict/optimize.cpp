@@ -11,7 +11,7 @@ void optimize(RsHash train, RsHash &valid, QString valid_file, TaxHash tracks) {
     qsrand(2011);
     float err = 0.5, errThr = 0.112, minerr = 0.5;
     int alfa = 0, alfa_h = 100, best_alfa = 0;
-    int n = 0, nThr = 200;
+    int n = 0; //nThr = 200;
     do {
         alfa++;
         n++;
