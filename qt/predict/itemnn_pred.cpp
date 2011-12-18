@@ -43,29 +43,30 @@ void itemnn_pred::study(RsHash train, bool verbose) {
         int items_n = items.count();
 
         int items_processed = 0;
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 100)
         for(int n = 0; n < items_n; n++) {
 
             // calculate weights
             int i = items[n];
             QSet<int> iset = items_users_set[i];
             QVector<QPair<int, float> > i_neighb;
-            int n2 = n + 1;
-            while (n2 < items_n) {
+            for(int n2 = n + 1; n2 < items_n; n2++) {
                 int j = items[n2];
                 QSet<int> jset = items_users_set[j];
-                float ij_intersect = iset.intersect(jset).size();
-                if (ij_intersect > 0) {
-                    float w = ij_intersect / iset.unite(jset).size();
-                    //printf("%d  %d   %2.4f\n", i, j, w);
+                QSet<int> itersect_set(iset);
+                itersect_set.intersect(jset);
+                if (itersect_set.size() > 0) {
+                    QSet<int> unite_set(iset);
+                    unite_set.unite(jset);
+                    float w = (float)itersect_set.size() / unite_set.size();
                     if (w > 0.3) {
                         QPair<int, float> pair;
                         pair.first = j;
                         pair.second = w;
                         i_neighb.append(pair);
+                        //printf("i=%d j=%d w=%1.4f\n", i, pair.first, pair.second);
                     }
                 }
-                n2++;
             }
 
             // sort and shrink to N neighbors
@@ -95,7 +96,7 @@ void itemnn_pred::study(RsHash train, bool verbose) {
             {
                 items_processed++;
                 if (n % 100 == 0)
-                    printf("%d items processed  %f %% complited\r", items_processed, float(items_processed)/items_n*100);
+                    printf("%d items processed  %f %% complited i2i.size=%d\n", items_processed, float(items_processed)/items_n*100, i2i_weights.size());
             }
         }
 
