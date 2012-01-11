@@ -59,7 +59,7 @@ void itemnn_pred::study(RsHash train, bool verbose) {
                     QSet<int> unite_set(iset);
                     unite_set.unite(jset);
                     float w = (float)itersect_set.size() / unite_set.size();
-                    if (w > 0.3) {
+                    if (w > 0.01) {
                         QPair<int, float> pair;
                         pair.first = j;
                         pair.second = w;
@@ -95,8 +95,8 @@ void itemnn_pred::study(RsHash train, bool verbose) {
 #pragma omp critical
             {
                 items_processed++;
-                if (n % 100 == 0)
-                    printf("%d items processed  %f %% complited i2i.size=%d\n", items_processed, float(items_processed)/items_n*100, i2i_weights.size());
+                if (items_processed % 100 == 0)
+                    printf("%d items processed  %f %% complited i2i.size=%d\r", items_processed, float(items_processed)/items_n*100, i2i_weights.size());
             }
         }
 
@@ -125,49 +125,50 @@ void itemnn_pred::study(RsHash train, bool verbose) {
     if (verbose) printf("OK %d items * N neighbours loaded\n", i2i_weights.size());
 }
 
-void itemnn_pred::predict(RsHash train, RsHash &valid, float params, bool verbose) {
+void itemnn_pred::predict(RsHash train, RsHash &valid, float p, bool verbose) {
     if (verbose) printf("Predicting (item nn)... \n");
 
+    RsHash new_valid(valid);
+
     // iterate through users (valid)
-    RsHashIterMut vit(valid);
+    RsHashIter uit(valid);
     int users_n = valid.size(), n = 0;
-    while (vit.hasNext()) {
-        vit.next();
+    while (uit.hasNext()) {
+        uit.next();
         n++;
-        int u = vit.key();
+        int u = uit.key();
         QHash<int, float> u_rs = train[u]; // user's ratings
         // iterate through user ratings
-        QMutableHashIterator<int, float> iit(vit.value());
+        QHashIterator<int, float> iit(uit.value());
         while (iit.hasNext()) {
             iit.next();
             int i = iit.key();
 
             // compute rating as weighted sum of neighbours
             float r = 0;
-            QHashIterator<int, float> it(u_rs);
-            while(it.hasNext()) {
-                it.next();
+            QHash<int, float>::const_iterator it;
+            for(it = u_rs.constBegin(); it != u_rs.constEnd(); ++it) {
                 int j = it.key();
-                float jr = it.value();
                 QPair<int, int> pair;
                 pair.first = i;
                 pair.second = j;
-                float w = i2i_weights[pair];
-
-                r += w * (1 + jr);
+                float w = i2i_weights.value(pair, 0);
+                if (w > 0)
+                    r += w * pow(1 + it.value(), p);
             }
-
-            iit.value() = r;
-            //printf("%d %d %f\n", u, i, valid[u][i]);
+            new_valid[u][i] = r;
         }
-        printf("%3.3f %% complited\r", float(n) / users_n * 100);
+        if (verbose) printf("%3.3f %% complited\r", float(n) / users_n * 100);
     }
+    valid = new_valid;
+
     if (verbose) printf("\nOK\n");
 }
 
-
-
-
+RsHash itemnn_pred::get_predictions(RsHash train, RsHash &valid, float p) {
+    itemnn_pred::predict(train, valid, p, false);
+    return valid;
+}
 
 
 

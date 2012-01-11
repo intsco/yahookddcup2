@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 
     Sleep(3000);
 
-    printf("Start prediction\n");
+    printf("Start\n");
     QTime myTimer;
     myTimer.start();
 
@@ -103,14 +103,14 @@ int main(int argc, char *argv[]) {
 //    predict(train, valid, tracks);
 //    estimate(valid, valid_file);
 
-    itemnn_pred::study(train, true);    
-    itemnn_pred::predict(train, valid, 0, true);
-    estimate(valid, valid_file, true);
+    itemnn_pred::study(train, true);
+//    itemnn_pred::predict(train, valid, 1, true);
+//    estimate(valid, valid_file, true);
 
-//    optimize(train, valid, valid_file, tracks);
+    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);
+//    optimize_bf(train, valid, valid_file, itemnn_pred::get_predictions);
 
-
-    printf("Prediction finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
+    printf("Finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
     return a.exec();
 }
 
