@@ -12,8 +12,8 @@ TARGET = predict
 CONFIG   += console
 CONFIG   -= app_bundle
 
-#QMAKE_CXXFLAGS += -fopenmp
-#LIBS += -lgomp
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -lgomp
 
 TEMPLATE = app
 
