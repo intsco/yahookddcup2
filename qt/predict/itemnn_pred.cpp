@@ -11,48 +11,79 @@ struct next_less {
 void itemnn_pred::study(RsHash train, bool verbose) {
     if (verbose) printf("Studing item NN ...\n");
 
-    QFile binfile("../../i2i_weights.bin");
+    QFile binfile("../../tmp_i2i_weights_all.bin");
     if (!binfile.exists()) {
 
         if (verbose) printf("Preparing items users sets ...\n");
         // prepare items users sets
-        QHash<int, QSet<int> > items_users_set;
-        RsHashIter it(train);
-        while(it.hasNext()) {
-            it.next();
-            int u = it.key();
-            QHashIterator<int, float> iit(it.value());
-            while(iit.hasNext()) {
-                iit.next();
-                int i = iit.key();
-                if (!items_users_set.contains(i)) {
-                    QSet<int> users;
-                    users.insert(u);
-                    items_users_set.insert(i, users);
-                }
-                else {
-                    items_users_set[i].insert(u);
+        QFile items_users_binfile("../../items_users.bin");
+        QList< QPair<int, QSet<int> > > items_users_sets;
+
+        QHash<int, QSet<int> > items_users_sets_h;
+        if(!items_users_binfile.exists()) {
+            RsHashIter it(train);
+            while(it.hasNext()) {
+                it.next();
+                int u = it.key();
+                QHashIterator<int, float> iit(it.value());
+                while(iit.hasNext()) {
+                    iit.next();
+                    int i = iit.key();
+                    if (!items_users_sets_h.contains(i)) {
+                        QSet<int> users;
+                        users.insert(u);
+                        items_users_sets_h.insert(i, users);
+                    }
+                    else {
+                        items_users_sets_h[i].insert(u);
+                    }
                 }
             }
+            // change data structure (hash -> list)
+            QList<int> items = items_users_sets_h.keys();
+            qSort(items);
+            int item = 0;
+            foreach(item, items) {
+                QPair<int, QSet<int> > pair(item, items_users_sets_h[item]);
+                items_users_sets.append(pair);
+            }
+            // serialize
+            items_users_binfile.open(QFile::WriteOnly);
+            QDataStream bin(&items_users_binfile);
+            bin << items_users_sets;
+            items_users_binfile.close();
+        }
+        else {
+            // deserialize
+            items_users_binfile.open(QFile::ReadOnly);
+            QDataStream bin(&items_users_binfile);
+            bin >> items_users_sets;
+            items_users_binfile.close();
         }
 
         // calculating weights
         if (verbose) printf("Calculating item to item weights ...\n");
-        QList<int> items = items_users_set.keys();
-        qSort(items);
-        int items_n = items.count();
 
-        int items_processed = 0;
-#pragma omp parallel for
+        QTime myTimer;
+        myTimer.start();
+
+#pragma omp parallel for schedule(dynamic, 50)
+        int items_processed = 0, items_n = items_users_sets.size();
+
+        //QList< QPair<int, QSet<int> > >::const_iter it;
+        //for(it = items_users_sets.constBegin(); it < items_users_sets.constEnd(); ++it) {
         for(int n = 0; n < items_n; n++) {
 
             // calculate weights
-            int i = items[n];
-            QSet<int> iset = items_users_set[i];
+            //int i = (*it).first;
+            //QSet<int> iset = (*it).second;
+            int i = items_users_sets[i].first;
+            QSet<int> iset = items_users_sets[i].second;
             QVector<QPair<int, float> > i_neighb;
+            //QVector< QPair<int, QSet<int> > >::const_iter it;
             for(int n2 = n + 1; n2 < items_n; n2++) {
-                int j = items[n2];
-                QSet<int> jset = items_users_set[j];
+                int j = items_users_sets[n2].first;
+                QSet<int> jset = items_users_sets[n2].second;
                 QSet<int> itersect_set(iset);
                 itersect_set.intersect(jset);
                 if (itersect_set.size() > 0) {
@@ -60,9 +91,9 @@ void itemnn_pred::study(RsHash train, bool verbose) {
                     unite_set.unite(jset);
                     float w = (float)itersect_set.size() / unite_set.size();
                     if (w > 0.01) {
-                        QPair<int, float> pair;
-                        pair.first = j;
-                        pair.second = w;
+                        QPair<int, float> pair(j, w);
+                        //pair.first = j;
+                        //pair.second = w;
                         i_neighb.append(pair);
                         //printf("i=%d j=%d w=%1.4f\n", i, pair.first, pair.second);
                     }
@@ -72,7 +103,7 @@ void itemnn_pred::study(RsHash train, bool verbose) {
             // sort and shrink to N neighbors
             std::sort(i_neighb.begin(), i_neighb.end(), next_less()); // sort in descending order by weights
             QVector<QPair<int, float> > tmp_i_neighb;
-            int k = 0, neighb_n = 50;
+            int k = 0, neighb_n = 1500;
             if (i_neighb.size() < neighb_n) neighb_n = i_neighb.size();
             while(k < neighb_n) {
                 tmp_i_neighb.append(i_neighb[k]);
@@ -80,12 +111,12 @@ void itemnn_pred::study(RsHash train, bool verbose) {
             }
             i_neighb = tmp_i_neighb;
 
-            // append to the items_neighbors hash
+            // append to the i2i hash
             k = 0;
             while(k < neighb_n) {
-                QPair<int, int> pair;
-                pair.first = i;
-                pair.second = i_neighb[k].first;
+                QPair<int, int> pair(i, i_neighb[k].first);
+                //pair.first = i;
+                //pair.second = i_neighb[k].first;
 #pragma omp critical
                 {
                     i2i_weights.insert(pair, i_neighb[k].second);
@@ -95,8 +126,10 @@ void itemnn_pred::study(RsHash train, bool verbose) {
 #pragma omp critical
             {
                 items_processed++;
-                if (items_processed % 100 == 0)
-                    printf("%d items processed  %f %% complited i2i.size=%d\r", items_processed, float(items_processed)/items_n*100, i2i_weights.size());
+                if (items_processed % 1 == 0)
+                    printf("%d items processed  %f %% complited i2i.size=%d  speed=%5.0f\r",
+                           items_processed, float(items_processed)/items_n*100,
+                           i2i_weights.size(), (float)(myTimer.elapsed())/items_processed );
 
             }
         }

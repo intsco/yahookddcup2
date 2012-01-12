@@ -92,8 +92,8 @@ int main(int argc, char *argv[]) {
     QTime myTimer;
     myTimer.start();
 
-    QString train_file = "../../train";
-    QString valid_file = "../../valid";
+    QString train_file = "../../train_sample";
+    QString valid_file = "../../valid_sample";
     QString tracks_file = "../../_trackData.txt";
 
     RsHash train = load_trainset(train_file, TRAIN);
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 //    itemnn_pred::predict(train, valid, 1, true);
 //    estimate(valid, valid_file, true);
 
-    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);
+//    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_file, itemnn_pred::get_predictions);
 
     printf("Finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
