@@ -63,22 +63,21 @@ void itemnn_pred::study(RsHash train, bool verbose) {
 
         // calculating weights
         if (verbose) printf("Calculating item to item weights ...\n");
-
         QTime myTimer;
         myTimer.start();
 
-#pragma omp parallel for schedule(dynamic, 50)
         int items_processed = 0, items_n = items_users_sets.size();
 
         //QList< QPair<int, QSet<int> > >::const_iter it;
         //for(it = items_users_sets.constBegin(); it < items_users_sets.constEnd(); ++it) {
+#pragma omp parallel for schedule(dynamic, 50)
         for(int n = 0; n < items_n; n++) {
 
             // calculate weights
             //int i = (*it).first;
             //QSet<int> iset = (*it).second;
-            int i = items_users_sets[i].first;
-            QSet<int> iset = items_users_sets[i].second;
+            int i = items_users_sets[n].first;
+            QSet<int> iset = items_users_sets[n].second;
             QVector<QPair<int, float> > i_neighb;
             //QVector< QPair<int, QSet<int> > >::const_iter it;
             for(int n2 = n + 1; n2 < items_n; n2++) {
@@ -166,7 +165,7 @@ void itemnn_pred::predict(RsHash train, RsHash &valid, float p, bool verbose) {
 
     // iterate through users (valid)
     RsHashIter uit(valid);
-    int users_n = valid.size(), n = 0;
+    int users_n = valid.size(), n = 0, neighb_n = 50;
     while (uit.hasNext()) {
         uit.next();
         n++;
@@ -179,17 +178,28 @@ void itemnn_pred::predict(RsHash train, RsHash &valid, float p, bool verbose) {
             int i = iit.key();
 
             // compute rating as weighted sum of neighbours
-            float r = 0;
             QHash<int, float>::const_iterator it;
+            QList< QPair<int, float> > most_sim_neighb;
             for(it = u_rs.constBegin(); it != u_rs.constEnd(); ++it) {
                 int j = it.key();
-                QPair<int, int> pair;
-                pair.first = i;
-                pair.second = j;
+                QPair<int, int> pair(i, j);
                 float w = i2i_weights.value(pair, 0);
-                if (w > 0)
-                    r += w * pow(1 + it.value(), p);
+                QPair<int, float> neighb_w(j, w);
+                most_sim_neighb.append(neighb_w);
             }
+            float r = 0;
+            std::sort(most_sim_neighb.begin(), most_sim_neighb.end(), next_less());
+            QListIterator< QPair<int, float> > nit(most_sim_neighb);
+            int k = 0;
+	    while(nit.hasNext() && k < 50) {
+		QPair<int, float> neighb_w = nit.next();
+		int j = neighb_w.first;
+		float w = neighb_w.second;
+		if (w > 0)
+		    r += w * pow(1 + u_rs[j], p);
+		k++;
+	    }
+            
             new_valid[u][i] = r;
         }
         if (verbose) printf("%3.3f %% complited\r", float(n) / users_n * 100);
