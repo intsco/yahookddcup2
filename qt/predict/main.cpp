@@ -2,7 +2,7 @@
 #include "content_pred.h"
 #include "itemnn_pred.h"
 #include "optimize.h"
-
+#include "check_i2i_weights.h"
 
 RsHash load_trainset(QString fileName, int set) {
     printf("Start loading set from %s ...", qPrintable(fileName));
@@ -101,12 +101,14 @@ int main(int argc, char *argv[]) {
     RsHash valid = load_trainset(valid_file, VALID);
 //    TaxHash tracks = load_tracks(tracks_file);
 
+    check(train, "../i2i_weights");
+
 //    predict(train, valid, tracks);
 //    estimate(valid, valid_file);
 
-    itemnn_pred::study(train, true);
-    itemnn_pred::predict(train, valid, 0.65, true);
-    estimate(valid, valid_file, true);
+//    itemnn_pred::study(train, true);
+//    itemnn_pred::predict(train, valid, 1, true);
+//    estimate(valid, valid_file, true);
 
 //    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_file, itemnn_pred::get_predictions);

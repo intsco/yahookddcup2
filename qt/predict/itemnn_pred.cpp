@@ -128,7 +128,7 @@ void itemnn_pred::study(RsHash train, bool verbose) {
                 if (items_processed % 1 == 0)
                     printf("%d items processed  %f %% complited i2i.size=%d  speed=%5.0f\r",
                            items_processed, float(items_processed)/items_n*100,
-                           i2i_weights.size(), (float)(myTimer.elapsed())/items_processed );
+                           i2i_weights.size(), (float)(items_processed*1000)/myTimer.elapsed() );
 
             }
         }
