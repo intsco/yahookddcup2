@@ -77,8 +77,8 @@ void itemnn_pred::study(RsHash train, bool verbose) {
             // calculate weights
             //int i = (*it).first;
             //QSet<int> iset = (*it).second;
-            int i = items_users_sets[i].first;
-            QSet<int> iset = items_users_sets[i].second;
+            int i = items_users_sets[n].first;
+            QSet<int> iset = items_users_sets[n].second;
             QVector<QPair<int, float> > i_neighb;
             //QVector< QPair<int, QSet<int> > >::const_iter it;
             for(int n2 = n + 1; n2 < items_n; n2++) {
@@ -129,7 +129,7 @@ void itemnn_pred::study(RsHash train, bool verbose) {
                 if (items_processed % 1 == 0)
                     printf("%d items processed  %f %% complited i2i.size=%d  speed=%5.0f\r",
                            items_processed, float(items_processed)/items_n*100,
-                           i2i_weights.size(), (float)(myTimer.elapsed())/items_processed );
+                           i2i_weights.size(), (float)(items_processed*1000)/myTimer.elapsed() );
 
             }
         }

@@ -22,7 +22,8 @@ SOURCES += main.cpp \
     content_pred.cpp \
     optimize.cpp \
     estimate.cpp \
-    itemnn_pred.cpp
+    itemnn_pred.cpp \
+    check_i2i_weights.cpp
 
 HEADERS += \
     content_pred.h \
@@ -30,4 +31,5 @@ HEADERS += \
     main.h \
     optimize.h \
     estimate.h \
-    itemnn_pred.h
+    itemnn_pred.h \
+    check_i2i_weights.h
