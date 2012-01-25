@@ -91,9 +91,10 @@ int main(int argc, char *argv[]) {
     printf("Start\n");
     QTime myTimer;
     myTimer.start();
+    setbuf(stdout, NULL);
 
-    QString train_file = "../../train_sample";
-    QString valid_file = "../../valid_sample";
+    QString train_file = "../../train";
+    QString valid_file = "../../valid";
     QString tracks_file = "../../_trackData.txt";
 
     RsHash train = load_trainset(train_file, TRAIN);
@@ -114,7 +115,7 @@ int main(int argc, char *argv[]) {
 
     printf("Finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
     //return a.exec();
-    return 0;
+    exit(1);
 }
 
 
