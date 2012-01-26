@@ -60,7 +60,7 @@ def has_rated(rs, item) :
 
 def get_rand_user_negatives(rs, Man) :
 	non_r_items = []
-	while (len(non_r_items) < len(rs)) :
+	while (len(non_r_items) < len(rs) / 2) :
 		hi = len(shmem.data.i_hi_p_probsums)
 		lo = 0
 		x = random.random()
@@ -69,7 +69,6 @@ def get_rand_user_negatives(rs, Man) :
 			mid = (lo+hi)/2
 			midval = shmem.data.i_hi_p_probsums[mid]
 			prev_midval = shmem.data.i_hi_p_probsums[mid-1]
-			#print mid, prev_midval, midval, '\r', 
 			if midval < x :
 				lo = mid+1
 			elif prev_midval > x : 
@@ -77,10 +76,10 @@ def get_rand_user_negatives(rs, Man) :
 			else:
 				item = shmem.data.i_hi_p_items[mid]
 				break
-	#        Man['lock'].acqure()
-	#        print x, mid, i_hi_p_probsums[mid-1], i_hi_p_probsums[mid], i_hi_p_probsums[mid+1]
-	#        Man['lock'].release()
-	#        print "i=", item
+		#Man['lock'].acquire()
+		#print x, mid, shmem.data.i_hi_p_probsums[mid-1], shmem.data.i_hi_p_probsums[mid], shmem.data.i_hi_p_probsums[mid+1]
+		#print len(rs), len(non_r_items)
+		#Man['lock'].release()
 			
 		if (not has_rated(rs, item) and item not in non_r_items) :
 			non_r_items.append(item)
