@@ -129,8 +129,11 @@ def draw_negatives(users, users_rs, i_hi_p_items, i_hi_p_probsums, Man) :
 	for r in results :
 		tmp = r.get()
 		users_negatives[tmp[0]] = tmp[1]
+		
+		Man['lock'].acquire()
 		i += 1.0
 		print "{0} user(s) and {1} % completed\r".format(i, i / users_n * 100),
+		Man['lock'].release()
 		
 	print '\nlen(users_negatives)=', len(users_negatives)
 	return users_negatives
@@ -151,9 +154,9 @@ def main() :
 	if __name__ == '__main__' :
 		Man = {
 			'lock' : mp.Manager().Lock(),
-			'train_fn' : '../train_sample',
-			'train_negatives_fn' : '../train_negatives_sample',
-			'processes' : 2}
+			'train_fn' : '../../train',
+			'train_negatives_fn' : '../../train_negatives',
+			'processes' : 8}
 
 		# Loading data
 		users_info = load_trainset(Man['train_fn'], '')
