@@ -57,10 +57,19 @@ def has_rated(rs, item) :
 			return True
 		k += 2
 	return False
+	
+def get_hi_r_numb(rs) :
+	k, n = 0, 0
+	while (k <= len(rs)-2) :
+		if (rs[k+1] >= 80) :
+			n += 1
+		k += 2
+	return n
 
 def get_rand_user_negatives(rs, Man) :
 	non_r_items = []
-	while (len(non_r_items) < len(rs) / 2) :
+	hi_r_numb = get_hi_r_numb(rs)
+	while (len(non_r_items) <= hi_r_numb) :
 		hi = len(shmem.data.i_hi_p_probsums)
 		lo = 0
 		x = random.random()

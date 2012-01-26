@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     RsHash valid = load_trainset(valid_file, VALID);
 //    TaxHash tracks = load_tracks(tracks_file);
 
-    check(train, "../i2i_weights");
+//    check(train, "../i2i_weights");
 
 //    predict(train, valid, tracks);
 //    estimate(valid, valid_file);
