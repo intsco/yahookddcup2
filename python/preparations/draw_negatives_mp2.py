@@ -60,7 +60,7 @@ def has_rated(rs, item) :
 
 def get_rand_user_negatives(rs, Man) :
 	non_r_items = []
-	while (len(non_r_items) < len(rs)) :
+	while (len(non_r_items) < len(rs) / 2) :
 		hi = len(shmem.data.i_hi_p_probsums)
 		lo = 0
 		x = random.random()
@@ -69,7 +69,6 @@ def get_rand_user_negatives(rs, Man) :
 			mid = (lo+hi)/2
 			midval = shmem.data.i_hi_p_probsums[mid]
 			prev_midval = shmem.data.i_hi_p_probsums[mid-1]
-			#print mid, prev_midval, midval, '\r', 
 			if midval < x :
 				lo = mid+1
 			elif prev_midval > x : 
@@ -77,10 +76,10 @@ def get_rand_user_negatives(rs, Man) :
 			else:
 				item = shmem.data.i_hi_p_items[mid]
 				break
-	#        Man['lock'].acqure()
-	#        print x, mid, i_hi_p_probsums[mid-1], i_hi_p_probsums[mid], i_hi_p_probsums[mid+1]
-	#        Man['lock'].release()
-	#        print "i=", item
+		#Man['lock'].acquire()
+		#print x, mid, shmem.data.i_hi_p_probsums[mid-1], shmem.data.i_hi_p_probsums[mid], shmem.data.i_hi_p_probsums[mid+1]
+		#print len(rs), len(non_r_items)
+		#Man['lock'].release()
 			
 		if (not has_rated(rs, item) and item not in non_r_items) :
 			non_r_items.append(item)
@@ -129,8 +128,11 @@ def draw_negatives(users, users_rs, i_hi_p_items, i_hi_p_probsums, Man) :
 	for r in results :
 		tmp = r.get()
 		users_negatives[tmp[0]] = tmp[1]
+		
+		Man['lock'].acquire()
 		i += 1.0
 		print "{0} user(s) and {1} % completed\r".format(i, i / users_n * 100),
+		Man['lock'].release()
 		
 	print '\nlen(users_negatives)=', len(users_negatives)
 	return users_negatives
@@ -151,9 +153,9 @@ def main() :
 	if __name__ == '__main__' :
 		Man = {
 			'lock' : mp.Manager().Lock(),
-			'train_fn' : '../train_sample',
-			'train_negatives_fn' : '../train_negatives_sample',
-			'processes' : 2}
+			'train_fn' : '../../train_sample',
+			'train_negatives_fn' : '../../train_negatives_sample',
+			'processes' : 1}
 
 		# Loading data
 		users_info = load_trainset(Man['train_fn'], '')
