@@ -25,7 +25,8 @@ SOURCES += main.cpp \
     optimize.cpp \
     estimate.cpp \
     itemnn_pred.cpp \
-    check_i2i_weights.cpp
+    check_i2i_weights.cpp \
+    binsvd_pred.cpp
 
 HEADERS += \
     content_pred.h \
@@ -34,4 +35,5 @@ HEADERS += \
     optimize.h \
     estimate.h \
     itemnn_pred.h \
-    check_i2i_weights.h
+    check_i2i_weights.h \
+    binsvd_pred.h
