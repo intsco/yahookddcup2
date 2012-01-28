@@ -3,7 +3,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-QHash<int, QHash<int, int> > load_set();
-QHash<int, QVector<int> > load_tracks();
+RsHash load_set(QString fileName, int set);
+TaxHash load_tracks(QString tracks_fn);
 
 #endif // MAIN_H
