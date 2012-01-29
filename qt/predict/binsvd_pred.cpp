@@ -1,34 +1,38 @@
 #include "binsvd_pred.h"
 
-QHash<int, float*> user_factors;
-QHash<int, float*> item_factors;
+QHash<int, QVector<float> > user_factors;
+QHash<int, QVector<float> > item_factors;
 QHash<int, QList<int> > user_negatives;
 QHash<int, QList<int> > user_positives;
 
-QHash<int, QList<int> > load_negatives() {
+QHash<int, QList<int> > load_negatives(QString file_name)
+{
     QHash<int, QList<int> > user_negatives;
 
-    QString fileName = "../../train_negatives";
-    printf("Start loading set from %s ...", qPrintable(fileName));
+    printf("Start loading set from %s ... ", qPrintable(file_name));
 
-    QFile binfile(fileName + ".bin");
-    if (!binfile.exists()) {
-        QFile file(fileName + ".txt");
+    QFile binfile(file_name + ".bin");
+    if (!binfile.exists())
+    {
+        QFile file(file_name + ".txt");
         file.open(QFile::ReadOnly);
         QTextStream in(&file);
 
         int u = 0, i = 0;
         QStringList list;
-        while (!in.atEnd()) {
+        while (!in.atEnd())
+        {
             QString line = in.readLine();
 //            printf(qPrintable(line+'\n'));
-            if (line.contains('|')) {
+            if (line.contains('|'))
+            {
                 list = line.split('|');
                 u = list.at(0).toInt();
                 QList<int> items;
                 user_negatives.insert(u, items);
             }
-            else {
+            else
+            {
                 list = line.split('\t');
                 i = list.at(0).toInt();
                 user_negatives[u].append(i);
@@ -42,7 +46,8 @@ QHash<int, QList<int> > load_negatives() {
         bin << user_negatives;
         binfile.close();
     }
-    else {
+    else
+    {
         // deserialization
         binfile.open(QFile::ReadOnly);
         QDataStream bin(&binfile);
@@ -53,14 +58,17 @@ QHash<int, QList<int> > load_negatives() {
     return user_negatives;
 }
 
-QHash<int, QList<int> > load_positives(RsHash train) {
+QHash<int, QList<int> > load_positives(RsHash train)
+{
     QHash<int, QList<int> > positives;
 
     RsHash::const_iterator it;
-    for(it = train.constBegin(); it != train.constEnd(); ++it) {
+    for(it = train.constBegin(); it != train.constEnd(); ++it)
+    {
         positives[it.key()] = QList<int>();
         QHash<int, float>::const_iterator it2;
-        for(it2 = it.value().constBegin(); it2 != it.value().constEnd(); ++it2) {
+        for(it2 = it.value().constBegin(); it2 != it.value().constEnd(); ++it2)
+        {
             if (it2.value() >= 80) {
                 positives[it.key()].append(it2.key());
             }
@@ -70,23 +78,29 @@ QHash<int, QList<int> > load_positives(RsHash train) {
     return positives;
 }
 
-void create_factors(QHash<int, float*> &factors, RsHash train, int fact_n, bool u_flag) {
+void create_factors(QHash<int, QVector<float> > &factors, RsHash train, int fact_n, bool u_flag)
+{
     QTime time = QTime::currentTime();
     qsrand((uint)time.msec());
 
     // fill all user ids
     QList<int> elements;
-    if (u_flag) {
+    if (u_flag)
+    {
         elements = train.keys();
     }
     // fill all item ids
-    else {
+    else
+    {
         QHash<int, int> items;
         RsHash::const_iterator it;
-        for(it = train.constBegin(); it != train.constEnd(); ++it) {
+        for(it = train.constBegin(); it != train.constEnd(); ++it)
+        {
             QHash<int, float>::const_iterator it2;
-            for(it2 = it.value().constBegin(); it2 != it.value().constEnd(); ++it2) {
-                if (!items.contains(it2.key())) {
+            for(it2 = it.value().constBegin(); it2 != it.value().constEnd(); ++it2)
+            {
+                if (!items.contains(it2.key()))
+                {
                     items[it2.key()] = 0;
                 }
             }
@@ -96,18 +110,24 @@ void create_factors(QHash<int, float*> &factors, RsHash train, int fact_n, bool 
 
     // fill factors with small randoms
     QList<int>::const_iterator it;
-    for(it = elements.constBegin(); it != elements.constEnd(); ++it) {
-        factors[*it] = new float[fact_n];
-        for(int fi = 0; fi < fact_n; fi++) {
-            float rand_v = (float)(qrand() % 11) / 1000;
-            factors[*it][fi] = rand_v;
+    for(it = elements.constBegin(); it != elements.constEnd(); ++it)
+    {
+        factors[*it] = QVector<float>();
+        for(int fi = 0; fi < fact_n; fi++)
+        {
+            float rand_v = (float)(qrand() % 10) / 1000 + 0.0005;
+            factors[*it].append(rand_v);
         }
+        if (factors[*it].count() < fact_n)
+            printf("%d  ", factors[*it].count());
     }
 }
 
-float dot_product(float* u_f, float* i_f, int fact_n) {
+float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
+{
     float dot_prod = 0;
-    for(int i = 0; i < fact_n; i++) {
+    for(int i = 0; i < fact_n; i++)
+    {
         dot_prod += u_f[i] * i_f[i];
     }
     return dot_prod;
@@ -115,13 +135,13 @@ float dot_product(float* u_f, float* i_f, int fact_n) {
 
 void binsvd_pred::study(RsHash train, bool verbose)
 {
-    printf("start binsvd studying...\n");
+    if (verbose) printf("Start binsvd studying...\n");
 
     int steps = 1, fact_n = 10;
     float alfa = 0.01, lambda = 0.01;
 
     // create and fill data structures
-    user_negatives = load_negatives();
+    user_negatives = load_negatives("../../train_negatives_sample");
     user_positives = load_positives(train);
     create_factors(user_factors, train, fact_n, 1);
     create_factors(item_factors, train, fact_n, 0);
@@ -148,6 +168,12 @@ void binsvd_pred::study(RsHash train, bool verbose)
                 for(it2 = items_list.constBegin(); it2 != items_list.constEnd(); ++it2)
                 {
                     int i = *it2;
+
+                    if (user_factors[u].count() < fact_n || item_factors[i].count() < fact_n)
+                    {
+                        printf("%d  %d,  %d  %d\n", u, user_factors[u].count(), i, item_factors[i].count());
+                    }
+
                     float pr = dot_product(user_factors[u], item_factors[i], fact_n);
                     float err = r - pr;
 
@@ -155,7 +181,7 @@ void binsvd_pred::study(RsHash train, bool verbose)
                     for(int fi = 0; fi < fact_n; fi++)
                     {
                         float user_f = user_factors[u][fi];
-                        float item_f = user_factors[u][fi];
+                        float item_f = item_factors[i][fi];
                         user_f = user_f + alfa * (err * item_f - lambda * user_f);
                         item_f = item_f + alfa * (err * user_f - lambda * item_f);
                     }
@@ -164,10 +190,11 @@ void binsvd_pred::study(RsHash train, bool verbose)
 
         }
     }
-    printf("ок\n");
+    if (verbose) printf("ok\n");
 }
 
-void free_memory(QHash<int, float*> &factors, QHash<int, float*> &factors2) {
+void free_memory(QHash<int, float*> &factors, QHash<int, float*> &factors2)
+{
     /*for(int i = 0; i < factors.count(); i++)     {
         factors
     }*/

@@ -90,7 +90,7 @@ def get_rand_user_negatives(rs, Man) :
 		#print len(rs), len(non_r_items)
 		#Man['lock'].release()
 			
-		if (not has_rated(rs, item) and item not in non_r_items) :
+		if (not has_rated(rs, item) and item not in non_r_items and item >= 0) :
 			non_r_items.append(item)
 	return non_r_items
   
