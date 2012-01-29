@@ -69,7 +69,7 @@ def get_hi_r_numb(rs) :
 def get_rand_user_negatives(rs, Man) :
 	non_r_items = []
 	hi_r_numb = get_hi_r_numb(rs)
-	while (len(non_r_items) <= hi_r_numb) :
+	while (len(non_r_items) < hi_r_numb) :
 		hi = len(shmem.data.i_hi_p_probsums)
 		lo = 0
 		x = random.random()
@@ -162,9 +162,9 @@ def main() :
 	if __name__ == '__main__' :
 		Man = {
 			'lock' : mp.Manager().Lock(),
-			'train_fn' : '../../train',
-			'train_negatives_fn' : '../../train_negatives',
-			'processes' : 8}
+			'train_fn' : '../../train_sample',
+			'train_negatives_fn' : '../../train_negatives_sample',
+			'processes' : 24}
 
 		# Loading data
 		users_info = load_trainset(Man['train_fn'], '')
