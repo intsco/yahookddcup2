@@ -2,8 +2,7 @@
 #include "content_pred.h"
 #include "itemnn_pred.h"
 #include "optimize.h"
-//#include "check_i2i_weights.h"
-//#include "binsvd_pred.h"
+#include "binsvd_pred.h"
 
 RsHash load_set(QString fileName, int set) {
     printf("Start loading set from %s ...", qPrintable(fileName));
@@ -91,16 +90,16 @@ int main(int argc, char *argv[])
     //Sleep(3000);
 
     printf("Start\n");
-   /* QTime myTimer;
+    QTime myTimer;
     myTimer.start();
     setbuf(stdout, NULL);
 
-    QString train_file = "../../train";
+    QString train_file = "../../train_sample";
     QString valid_file = "../../valid";
     QString tracks_file = "../../_trackData.txt";
 
-    RsHash train = load_trainset(train_file, TRAIN);
-    RsHash valid = load_trainset(valid_file, VALID);*/
+    RsHash train = load_set(train_file, TRAIN);
+    RsHash valid = load_set(valid_file, VALID);
 //    TaxHash tracks = load_tracks(tracks_file);
 
 //    predict(train, valid, tracks);
@@ -111,12 +110,12 @@ int main(int argc, char *argv[])
 //    itemnn_pred::predict(train, valid, 1, true);
 //    estimate(valid, valid_file, true);
 
-    //binsvd_pred::study(train, true);
+    binsvd_pred::study(train, true);
 
 //    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_file, itemnn_pred::get_predictions);
 
-    //printf("Finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
+    printf("Finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
     //return a.exec();
     exit(1);
 }
