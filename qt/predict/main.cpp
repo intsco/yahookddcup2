@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     setbuf(stdout, NULL);
 
     QString train_file = "../../train_sample";
-    QString valid_file = "../../valid";
+    QString valid_file = "../../valid_sample";
     QString tracks_file = "../../_trackData.txt";
 
     RsHash train = load_set(train_file, TRAIN);
@@ -111,6 +111,8 @@ int main(int argc, char *argv[])
 //    estimate(valid, valid_file, true);
 
     binsvd_pred::study(train, true);
+    binsvd_pred::predict(train, valid, true);
+    estimate(valid, valid_file, true);
 
 //    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_file, itemnn_pred::get_predictions);

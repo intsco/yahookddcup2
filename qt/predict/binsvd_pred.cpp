@@ -2,8 +2,6 @@
 
 QHash<int, QVector<float> > user_factors;
 QHash<int, QVector<float> > item_factors;
-QHash<int, QList<int> > user_negatives;
-QHash<int, QList<int> > user_positives;
 
 QHash<int, QList<int> > load_negatives(QString file_name)
 {
@@ -133,16 +131,16 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
     return dot_prod;
 }
 
+int steps = 10, fact_n = 100;
+float alfa = 0.01, lambda = 0.001;
+
 void binsvd_pred::study(RsHash train, bool verbose)
 {
     if (verbose) printf("Start binsvd studying...\n");
 
-    int steps = 1, fact_n = 10;
-    float alfa = 0.01, lambda = 0.01;
-
     // create and fill data structures
-    user_negatives = load_negatives("../../train_negatives_sample");
-    user_positives = load_positives(train);
+    QHash<int, QList<int> > user_negatives = load_negatives("../../train_negatives_sample");
+    QHash<int, QList<int> > user_positives = load_positives(train);
     create_factors(user_factors, train, fact_n, 1);
     create_factors(item_factors, train, fact_n, 0);
 
@@ -182,8 +180,8 @@ void binsvd_pred::study(RsHash train, bool verbose)
                     {
                         float user_f = user_factors[u][fi];
                         float item_f = item_factors[i][fi];
-                        user_f = user_f + alfa * (err * item_f - lambda * user_f);
-                        item_f = item_f + alfa * (err * user_f - lambda * item_f);
+                        user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
+                        item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
                     }
                 }
             }
@@ -193,13 +191,70 @@ void binsvd_pred::study(RsHash train, bool verbose)
     if (verbose) printf("ok\n");
 }
 
-void free_memory(QHash<int, float*> &factors, QHash<int, float*> &factors2)
-{
-    /*for(int i = 0; i < factors.count(); i++)     {
-        factors
-    }*/
+void save_factors() {
+    printf("Saving factors to files... /n");
+
+    //std::stringstream ss;
+    //ss<<"user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
+    QString file_name = "user_factors.bin";
+
+    QFile binfile(file_name);
+    binfile.open(QFile::WriteOnly);
+    QDataStream bin(&binfile);
+    bin << user_factors;
+    binfile.close();
+
+    file_name = file_name.replace("user", "item");
+
+    QFile binfile2(file_name);
+    binfile2.open(QFile::WriteOnly);
+    QDataStream bin2(&binfile);
+    bin2 << item_factors;
+    binfile2.close();
+
+    printf("ok/n");
 }
 
+void binsvd_pred::predict(RsHash train, RsHash &valid, bool verbose)
+{
+    if (verbose) printf("Binsvd predicting...\n");
+
+    RsHash new_valid(valid);
+
+    // iterate through users (valid)
+    RsHashIter uit(valid);
+    int users_n = valid.size(), n = 0;
+    while (uit.hasNext()) {
+        uit.next();
+        n++;
+        int u = uit.key();
+        // iterate through user valid ratings
+        QHashIterator<int, float> iit(uit.value());
+        while (iit.hasNext()) {
+            iit.next();
+            int i = iit.key();
+
+            // compute "rating" as dot product of factor vectors
+            float r = 0;
+            QVector<float> v;
+            if (!item_factors.contains(i))
+            {
+                for(int j = 0; j < user_factors[u].count(); j++)
+                {
+                    v.append(1);
+                }
+                r = dot_product(user_factors[u], v, user_factors[u].count());
+            }
+            else
+                r = dot_product(user_factors[u], item_factors[i], user_factors[u].count());
+            new_valid[u][i] = r;
+        }
+        if (verbose) printf("%3.3f %% complited\r", float(n) / users_n * 100);
+    }
+    valid = new_valid;
+
+    if (verbose) printf("ok\n");
+}
 
 
 
