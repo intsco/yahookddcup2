@@ -135,7 +135,7 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 
 void save_factors();
 
-int steps = 5, fact_n = 100;
+int steps = 50, fact_n = 10;
 float alfa = 0.01, lambda = 0.01;
 
 void binsvd_pred::study(RsHash train, bool verbose)
@@ -143,7 +143,7 @@ void binsvd_pred::study(RsHash train, bool verbose)
     if (verbose) printf("Start binsvd studying...\n");
 
     stringstream ss;
-    ss<<"user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
+    ss<<"../../user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
     QString file_name = QString::fromStdString(ss.str());
     QFile binfile(file_name + ".bin");
     if (!binfile.exists())
@@ -154,9 +154,12 @@ void binsvd_pred::study(RsHash train, bool verbose)
         create_factors(user_factors, train, fact_n, 1);
         create_factors(item_factors, train, fact_n, 0);
 
+        int un = user_positives.count();
         // by step
         for (int st = 1; st <= steps; st++)
         {
+            if (verbose) printf("%d step: \n", st);
+            int j = 0;
             // by user
             QHash<int, QList<int> >::const_iterator it;
             for(it = user_positives.constBegin(); it != user_positives.constEnd(); ++it)
@@ -195,8 +198,11 @@ void binsvd_pred::study(RsHash train, bool verbose)
                         }
                     }
                 }
-
+                j++;
+                if (verbose && j % 100 == 0)
+                    printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
             }
+            printf("\n");
         }
         save_factors();
     }
@@ -215,13 +221,13 @@ void binsvd_pred::study(RsHash train, bool verbose)
 }
 
 void save_factors() {
-    printf("Saving factors to files... /n");
+    printf("Saving factors to files... ");
 
     stringstream ss;
-    ss<<"user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
-    QString file_name = "user_factors.bin";
+    ss<<"../../user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
+    QString file_name = QString::fromStdString(ss.str());
 
-    QFile binfile(file_name);
+    QFile binfile(file_name + ".bin");
     binfile.open(QFile::WriteOnly);
     QDataStream bin(&binfile);
     bin << user_factors;
@@ -229,13 +235,13 @@ void save_factors() {
 
     file_name = file_name.replace("user", "item");
 
-    QFile binfile2(file_name);
+    QFile binfile2(file_name + ".bin");
     binfile2.open(QFile::WriteOnly);
-    QDataStream bin2(&binfile);
+    QDataStream bin2(&binfile2);
     bin2 << item_factors;
     binfile2.close();
 
-    printf("ok/n");
+    printf("ok\n");
 }
 
 void binsvd_pred::predict(RsHash train, RsHash &valid, bool verbose)
