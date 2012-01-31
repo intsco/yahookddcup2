@@ -162,8 +162,8 @@ def main() :
 	if __name__ == '__main__' :
 		Man = {
 			'lock' : mp.Manager().Lock(),
-			'train_fn' : '../../train_sample',
-			'train_negatives_fn' : '../../train_negatives_sample',
+			'train_fn' : '../../train',
+			'train_negatives_fn' : '../../train_negatives',
 			'processes' : 24}
 
 		# Loading data
