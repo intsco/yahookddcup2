@@ -6,6 +6,7 @@
 //#include <windows.h>
 #include <omp.h>
 #include <cmath>
+#include <sstream>
 
 #include <QtGlobal>
 

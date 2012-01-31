@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
     myTimer.start();
     setbuf(stdout, NULL);
 
+<<<<<<< HEAD
     QString train_file = "../../train";
     QString valid_file = "../../valid";
     QString tracks_file = "../../_trackData.txt";
@@ -111,6 +112,8 @@ int main(int argc, char *argv[])
 //    estimate(valid, valid_file, true);
 
     binsvd_pred::study(train, true);
+    binsvd_pred::predict(train, valid, true);
+    estimate(valid, valid_file, true);
 
 //    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_file, itemnn_pred::get_predictions);

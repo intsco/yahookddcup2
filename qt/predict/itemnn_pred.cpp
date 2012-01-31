@@ -165,7 +165,7 @@ void itemnn_pred::predict(RsHash train, RsHash &valid, float p, bool verbose) {
 
     // iterate through users (valid)
     RsHashIter uit(valid);
-    int users_n = valid.size(), n = 0, neighb_n = 50;
+    int users_n = valid.size(), n = 0; //neighb_n = 50;
     while (uit.hasNext()) {
         uit.next();
         n++;
