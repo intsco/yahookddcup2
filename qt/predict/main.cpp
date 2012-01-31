@@ -94,7 +94,6 @@ int main(int argc, char *argv[])
     myTimer.start();
     setbuf(stdout, NULL);
 
-<<<<<<< HEAD
     QString train_file = "../../train";
     QString valid_file = "../../valid";
     QString tracks_file = "../../_trackData.txt";
