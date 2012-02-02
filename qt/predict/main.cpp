@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 //    itemnn_pred::predict(train, valid, 1, true);
 //    estimate(valid, valid_file, true);
 
-    binsvd_pred::study(train, true);
+    binsvd_pred::study(train, "../../train_negatives_sample", true);
     binsvd_pred::predict(train, valid, true);
     estimate(valid, valid_file, true);
 

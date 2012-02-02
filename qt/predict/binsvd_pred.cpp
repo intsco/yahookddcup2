@@ -5,7 +5,30 @@ using namespace std;
 QHash<int, QVector<float> > user_factors;
 QHash<int, QVector<float> > item_factors;
 
-QHash<int, QList<int> > load_negatives(QString file_name)
+QHash<int, QList<int> > load_item_users(QHash<int, QList<int> > user_items)
+{
+    QHash<int, QList<int> > item_users;
+    QHash<int, QList<int> >::const_iterator it;
+    for(it = user_items.constBegin(); it != user_items.constEnd(); ++it)
+    {
+        int u = it.key();
+        QList<int> items = it.value();
+        QList<int>::const_iterator it2;
+        for(it2 = items.constBegin(); it2 != items.constEnd(); ++it2)
+        {
+            int i = *it2;
+            if(!item_users.contains(i))
+            {
+                QList<int> users;
+                item_users.insert(i, users);
+            }
+            item_users[i].append(u);
+        }
+    }
+    return item_users;
+}
+
+QHash<int, QList<int> > load_user_negatives(QString file_name)
 {
     QHash<int, QList<int> > user_negatives;
 
@@ -58,7 +81,7 @@ QHash<int, QList<int> > load_negatives(QString file_name)
     return user_negatives;
 }
 
-QHash<int, QList<int> > load_positives(RsHash train)
+QHash<int, QList<int> > load_user_positives(RsHash train)
 {
     QHash<int, QList<int> > positives;
 
@@ -133,12 +156,13 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
     return dot_prod;
 }
 
+
 void save_factors();
 
-int steps = 2, fact_n = 10;
+int steps = 30, fact_n = 10;
 float alfa = 0.01, lambda = 0.01;
 
-void binsvd_pred::study(RsHash train, bool verbose)
+void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
 {
     if (verbose) printf("Start binsvd studying...\n");
 
@@ -149,8 +173,10 @@ void binsvd_pred::study(RsHash train, bool verbose)
     if (!binfile.exists())
     {
         // create and fill data structures
-        QHash<int, QList<int> > user_negatives = load_negatives("../../train_negatives_sample");
-        QHash<int, QList<int> > user_positives = load_positives(train);
+        QHash<int, QList<int> > user_negatives = load_user_negatives(train_neg_fn);
+        QHash<int, QList<int> > user_positives = load_user_positives(train);
+        QHash<int, QList<int> > item_negatives = load_item_users(user_negatives);
+        QHash<int, QList<int> > item_positives = load_item_users(user_positives);
         create_factors(user_factors, train, fact_n, 1);
         create_factors(item_factors, train, fact_n, 0);
 
@@ -160,10 +186,10 @@ void binsvd_pred::study(RsHash train, bool verbose)
         {
             if (verbose) printf("%d step: \n", st);
             int j = 0;
-            // by user
-            QList<int> users = user_positives.keys();
-#pragma omp parallel for
+
             // update USER factors
+            QList<int> users = user_positives.keys();
+//#pragma omp parallel for
             for(int ui = 0; ui < un; ++ui)
             {
                 int u = users[ui];
@@ -195,15 +221,12 @@ void binsvd_pred::study(RsHash train, bool verbose)
                         {
                             float user_f = user_factors[u][fi];
                             float item_f = item_factors[i][fi];
-#pragma omp critical
-			    {
-                            user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
-                            }
+                            user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);                            
                             //item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
                         }
                     }
                 }
-#pragma omp critical
+//#pragma omp critical
                 {
                 j++;
                 if (verbose && j % 100 == 0)
@@ -211,25 +234,28 @@ void binsvd_pred::study(RsHash train, bool verbose)
                 }
             }
 
-#pragma omp parallel for
             // update ITEM factors
-            for(int ui = 0; ui < un; ++ui)
+            j = 0;
+            QList<int> items = item_positives.keys(); // TO-DO: not all pos item keys are contained in neg items
+            int in = item_positives.count();
+//#pragma omp parallel for
+            for(int ii = 0; ii < in; ++ii)
             {
-                int u = users[ui];
-                QList<int> u_pos = user_positives[u];
-                QList<int> u_neg = user_negatives[u];
+                int i = items[ii];
+                QList<int> i_pos = item_positives[i];
+                QList<int> i_neg = item_negatives.value(i, QList<int>());
 
-                // by negative and positive items
+                // by negative and positive users
                 for(int r = -1; r <= 1; r += 2)
                 {
-                    QList<int> items_list;
-                    if (r == -1) items_list = u_neg;
-                    else items_list = u_pos;
+                    QList<int> users_list;
+                    if (r == -1) users_list = i_neg;
+                    else users_list = i_pos;
 
                     QList<int>::const_iterator it2;
-                    for(it2 = items_list.constBegin(); it2 != items_list.constEnd(); ++it2)
+                    for(it2 = users_list.constBegin(); it2 != users_list.constEnd(); ++it2)
                     {
-                        int i = *it2;
+                        int u = *it2;
 
                         if (user_factors[u].count() < fact_n || item_factors[i].count() < fact_n)
                         {
@@ -245,18 +271,15 @@ void binsvd_pred::study(RsHash train, bool verbose)
                             float user_f = user_factors[u][fi];
                             float item_f = item_factors[i][fi];
                             //user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
-#pragma omp critical
-			    {
                             item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
-                            }
                         }
                     }
                 }
-#pragma omp critical
+//#pragma omp critical
                 {
                 j++;
                 if (verbose && j % 100 == 0)
-                    printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
+                    printf("%d users and %2.2f %% processed\r", j, (float)j / in * 100);
                 }
             }
 

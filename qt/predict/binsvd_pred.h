@@ -4,7 +4,7 @@
 #include "core.h"
 
 namespace binsvd_pred {
-    void study(RsHash train, bool verbose);
+    void study(RsHash train, QString, bool verbose);
     void predict(RsHash train, RsHash &valid, bool verbose);
 }
 
