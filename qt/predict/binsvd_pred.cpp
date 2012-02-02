@@ -135,7 +135,7 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 
 void save_factors();
 
-int steps = 50, fact_n = 10;
+int steps = 2, fact_n = 10;
 float alfa = 0.01, lambda = 0.01;
 
 void binsvd_pred::study(RsHash train, bool verbose)
@@ -161,11 +161,13 @@ void binsvd_pred::study(RsHash train, bool verbose)
             if (verbose) printf("%d step: \n", st);
             int j = 0;
             // by user
-            QHash<int, QList<int> >::const_iterator it;
-            for(it = user_positives.constBegin(); it != user_positives.constEnd(); ++it)
+            QList<int> users = user_positives.keys();
+#pragma omp parallel for
+            // update USER factors
+            for(int ui = 0; ui < un; ++ui)
             {
-                int u = it.key();
-                QList<int> u_pos = it.value();
+                int u = users[ui];
+                QList<int> u_pos = user_positives[u];
                 QList<int> u_neg = user_negatives[u];
 
                 // by negative and positive items
@@ -193,26 +195,84 @@ void binsvd_pred::study(RsHash train, bool verbose)
                         {
                             float user_f = user_factors[u][fi];
                             float item_f = item_factors[i][fi];
+#pragma omp critical
+			    {
                             user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
-                            item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
+                            }
+                            //item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
                         }
                     }
                 }
+#pragma omp critical
+                {
                 j++;
                 if (verbose && j % 100 == 0)
                     printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
+                }
             }
+
+#pragma omp parallel for
+            // update ITEM factors
+            for(int ui = 0; ui < un; ++ui)
+            {
+                int u = users[ui];
+                QList<int> u_pos = user_positives[u];
+                QList<int> u_neg = user_negatives[u];
+
+                // by negative and positive items
+                for(int r = -1; r <= 1; r += 2)
+                {
+                    QList<int> items_list;
+                    if (r == -1) items_list = u_neg;
+                    else items_list = u_pos;
+
+                    QList<int>::const_iterator it2;
+                    for(it2 = items_list.constBegin(); it2 != items_list.constEnd(); ++it2)
+                    {
+                        int i = *it2;
+
+                        if (user_factors[u].count() < fact_n || item_factors[i].count() < fact_n)
+                        {
+                            printf("%d  %d,  %d  %d\n", u, user_factors[u].count(), i, item_factors[i].count());
+                        }
+
+                        float pr = dot_product(user_factors[u], item_factors[i], fact_n);
+                        float err = r - pr;
+
+                        // by factor
+                        for(int fi = 0; fi < fact_n; fi++)
+                        {
+                            float user_f = user_factors[u][fi];
+                            float item_f = item_factors[i][fi];
+                            //user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
+#pragma omp critical
+			    {
+                            item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
+                            }
+                        }
+                    }
+                }
+#pragma omp critical
+                {
+                j++;
+                if (verbose && j % 100 == 0)
+                    printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
+                }
+            }
+
             printf("\n");
         }
         save_factors();
     }
     else
     {
+        binfile.open(QFile::ReadOnly);
         QDataStream bin(&binfile);
         bin >> user_factors;
         binfile.close();
 
         QFile binfile2(file_name.replace("user", "item") + ".bin");
+        binfile2.open(QFile::ReadOnly);
         QDataStream bin2(&binfile2);
         bin2 >> item_factors;
         binfile2.close();
