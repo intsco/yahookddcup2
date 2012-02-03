@@ -25,6 +25,7 @@ QHash<int, QList<int> > load_item_users(QHash<int, QList<int> > user_items)
             item_users[i].append(u);
         }
     }
+
     return item_users;
 }
 
@@ -135,7 +136,8 @@ void create_factors(QHash<int, QVector<float> > &factors, RsHash train, int fact
     QList<int>::const_iterator it;
     for(it = elements.constBegin(); it != elements.constEnd(); ++it)
     {
-        factors[*it] = QVector<float>();
+        QVector<float> vect(fact_n);
+        factors[*it] = vect;
         for(int fi = 0; fi < fact_n; fi++)
         {
             float rand_v = (float)(qrand() % 10) / 1000 + 0.0005;
@@ -189,7 +191,7 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
 
             // update USER factors
             QList<int> users = user_positives.keys();
-//#pragma omp parallel for
+#pragma omp parallel for
             for(int ui = 0; ui < un; ++ui)
             {
                 int u = users[ui];
@@ -219,14 +221,15 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
                         // by factor
                         for(int fi = 0; fi < fact_n; fi++)
                         {
-                            float user_f = user_factors[u][fi];
-                            float item_f = item_factors[i][fi];
+
+                            float user_f = user_factors[u].value(fi);
+                            float item_f = item_factors[i].value(fi); // <- some problems!
                             user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);                            
                             //item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
                         }
                     }
                 }
-//#pragma omp critical
+#pragma omp critical
                 {
                 j++;
                 if (verbose && j % 100 == 0)
@@ -235,10 +238,11 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
             }
 
             // update ITEM factors
+            printf("\n");
             j = 0;
             QList<int> items = item_positives.keys(); // TO-DO: not all pos item keys are contained in neg items
             int in = item_positives.count();
-//#pragma omp parallel for
+#pragma omp parallel for
             for(int ii = 0; ii < in; ++ii)
             {
                 int i = items[ii];
@@ -252,6 +256,8 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
                     if (r == -1) users_list = i_neg;
                     else users_list = i_pos;
 
+#pragma omp critical
+                    {
                     QList<int>::const_iterator it2;
                     for(it2 = users_list.constBegin(); it2 != users_list.constEnd(); ++it2)
                     {
@@ -268,24 +274,27 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
                         // by factor
                         for(int fi = 0; fi < fact_n; fi++)
                         {
-                            float user_f = user_factors[u][fi];
-                            float item_f = item_factors[i][fi];
+                            float user_f = 0;
+                            float item_f = 0;
+                            user_f = user_factors[u].value(fi);
+                            item_f = item_factors[i].value(fi);
                             //user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
                             item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
                         }
                     }
+                    }
                 }
-//#pragma omp critical
+#pragma omp critical
                 {
                 j++;
                 if (verbose && j % 100 == 0)
-                    printf("%d users and %2.2f %% processed\r", j, (float)j / in * 100);
+                    printf("%d items and %2.2f %% processed\r", j, (float)j / in * 100);
                 }
             }
 
             printf("\n");
         }
-        save_factors();
+        //save_factors();
     }
     else
     {
