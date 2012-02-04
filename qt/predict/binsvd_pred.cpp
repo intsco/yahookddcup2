@@ -141,7 +141,7 @@ void create_factors(QHash<int, QVector<float> > &factors, RsHash train, int fact
         for(int fi = 0; fi < fact_n; fi++)
         {
             float rand_v = (float)(qrand() % 10) / 1000 + 0.0005;
-            factors[*it].append(rand_v);
+            factors[*it][fi] = rand_v;
         }
         if (factors[*it].count() < fact_n)
             printf("%d  ", factors[*it].count());
@@ -161,7 +161,7 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 
 void save_factors();
 
-int steps = 30, fact_n = 10;
+int steps = 5, fact_n = 10;
 float alfa = 0.01, lambda = 0.01;
 
 void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
@@ -191,7 +191,7 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
 
             // update USER factors
             QList<int> users = user_positives.keys();
-#pragma omp parallel for
+//#pragma omp parallel for
             for(int ui = 0; ui < un; ++ui)
             {
                 int u = users[ui];
@@ -229,7 +229,7 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
                         }
                     }
                 }
-#pragma omp critical
+//#pragma omp critical
                 {
                 j++;
                 if (verbose && j % 100 == 0)
@@ -240,13 +240,14 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
             // update ITEM factors
             printf("\n");
             j = 0;
-            QList<int> items = item_positives.keys(); // TO-DO: not all pos item keys are contained in neg items
+            // TO-DO: not all pos_item keys are contained in neg_items
+            QList<int> items = item_negatives.keys().toSet().unite(item_positives.keys().toSet()).toList();
             int in = item_positives.count();
-#pragma omp parallel for
+//#pragma omp parallel for
             for(int ii = 0; ii < in; ++ii)
             {
                 int i = items[ii];
-                QList<int> i_pos = item_positives[i];
+                QList<int> i_pos = item_positives.value(i, QList<int>());
                 QList<int> i_neg = item_negatives.value(i, QList<int>());
 
                 // by negative and positive users
@@ -256,8 +257,6 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
                     if (r == -1) users_list = i_neg;
                     else users_list = i_pos;
 
-#pragma omp critical
-                    {
                     QList<int>::const_iterator it2;
                     for(it2 = users_list.constBegin(); it2 != users_list.constEnd(); ++it2)
                     {
@@ -282,9 +281,8 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
                             item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
                         }
                     }
-                    }
                 }
-#pragma omp critical
+//#pragma omp critical
                 {
                 j++;
                 if (verbose && j % 100 == 0)
