@@ -2,10 +2,13 @@
 #define BINSVD_PRED_H
 
 #include "core.h"
+#include "estimate.h"
+
+using namespace std;
 
 namespace binsvd_pred {
-    void study(RsHash train, QString, bool verbose);
-    void predict(RsHash train, RsHash &valid, bool verbose);
+    void study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, bool verbose);
+    RsHash predict(RsHash &valid, bool verbose);
 }
 
 #endif // BINSVD_PRED_H

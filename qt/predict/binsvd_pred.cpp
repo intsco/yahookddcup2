@@ -1,7 +1,5 @@
 #include "binsvd_pred.h"
 
-using namespace std;
-
 QHash<int, QVector<float> > user_factors;
 QHash<int, QVector<float> > item_factors;
 
@@ -160,13 +158,17 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 
 
 void save_factors();
+RsHash predict(RsHash &valid, bool verbose);
 
-int steps = 5, fact_n = 10;
+int steps = 50, fact_n = 100;
 float alfa = 0.01, lambda = 0.01;
 
-void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
+void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, bool verbose)
 {
     if (verbose) printf("Start binsvd studying...\n");
+
+    double min_err = 100;
+    int min_err_step = 1;
 
     stringstream ss;
     ss<<"../../user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
@@ -240,7 +242,6 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
             // update ITEM factors
             printf("\n");
             j = 0;
-            // TO-DO: not all pos_item keys are contained in neg_items
             QList<int> items = item_negatives.keys().toSet().unite(item_positives.keys().toSet()).toList();
             int in = item_positives.count();
 //#pragma omp parallel for
@@ -291,6 +292,14 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
             }
 
             printf("\n");
+            // calculate error
+            double err = estimate(binsvd_pred::predict(valid, false), valid_fn, false);
+            if (min_err > err)
+            {
+                min_err = err;
+                min_err_step = st;
+            }
+            printf("error rate: %2.2f\n", err*100);
         }
         //save_factors();
     }
@@ -307,7 +316,7 @@ void binsvd_pred::study(RsHash train, QString train_neg_fn, bool verbose)
         bin2 >> item_factors;
         binfile2.close();
     }
-    if (verbose) printf("ok\n");
+    if (verbose) printf("ok (min error %2.2f on %d step)\n", min_err, min_err_step);
 }
 
 void save_factors() {
@@ -334,7 +343,7 @@ void save_factors() {
     printf("ok\n");
 }
 
-void binsvd_pred::predict(RsHash train, RsHash &valid, bool verbose)
+RsHash binsvd_pred::predict(RsHash &valid, bool verbose)
 {
     if (verbose) printf("Binsvd predicting...\n");
 
@@ -373,6 +382,8 @@ void binsvd_pred::predict(RsHash train, RsHash &valid, bool verbose)
     valid = new_valid;
 
     if (verbose) printf("ok\n");
+
+    return new_valid;
 }
 
 
