@@ -108,11 +108,10 @@ int main(int argc, char *argv[])
 //    check(train, "../i2i_weights");
 //    itemnn_pred::study(train, true);
 //    itemnn_pred::predict(train, valid, 1, true);
-//    estimate(valid, valid_file, true);
+//    estimate(valid, valid_filerr, true);
 
-    binsvd_pred::study(train, "../../train_negatives_sample", true);
-    binsvd_pred::predict(train, valid, true);
-    estimate(valid, valid_file, true);
+    binsvd_pred::study(train, valid, "../../train_negatives_sample", valid_file, true);
+    estimate(binsvd_pred::predict(valid, true), valid_file, true);
 
 //    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_file, itemnn_pred::get_predictions);
