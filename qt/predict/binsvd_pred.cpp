@@ -162,14 +162,14 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 void save_factors();
 RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
-int steps = 50, fact_n = 10;
-float alfa = 0.001, lambda = 0.01;
+int steps = 300, fact_n = 10;
+float alfa = 0.1, lambda = 0.1;
 
 void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, bool verbose)
 {
     if (verbose) printf("Start binsvd studying...\n");
 
-    double min_err = 100;
+    double min_err = 1, last_err[4] = {1, 1, 1, 1};
     int min_err_step = 1;
 
     stringstream ss;
@@ -281,7 +281,7 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                             user_f = user_factors[u].value(fi);
                             item_f = item_factors[i].value(fi);
                             //user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
-                            item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
+                            item_factors[i][fi] = item_f + alfa/st * (err * user_f - lambda * item_f);
                         }
                     }
                 }
@@ -294,13 +294,21 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
             }
 
             double err = estimate(predict(valid, false), valid_fn, false);
+
             if (err < min_err)
             {
                 min_err = err;
                 min_err_step = st;
             }
+            if (verbose) printf("error %2.3f\n", err*100);
 
-            if (verbose) printf("error %2.2f\n", err*100);
+            last_err[3] = last_err[2];
+            last_err[2] = last_err[1];
+            last_err[1] = last_err[0];
+            last_err[0] = err;
+            if (st > 30 and ((abs(last_err[1] - last_err[0]) < 0.0001 and abs(last_err[2] - last_err[1]) < 0.0001 and abs(last_err[3] - last_err[2]) < 0.0001)
+                             or last_err[0] - last_err[3] > 0.01))
+                break;
         }
         //save_factors();
     }

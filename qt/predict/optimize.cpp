@@ -4,7 +4,7 @@ int rrand(int from, int to) {
     return from + (qrand() % (to-from));
 }
 
-// brute-force optimization
+// brute-force optimization (1-Dim)
 void optimize_bf(RsHash train, RsHash &valid, QString valid_file,
                  RsHash (*get_pred)(RsHash, RsHash &, float)) {
     printf("Brute-force optimizing...\n");
@@ -31,7 +31,7 @@ void optimize_bf(RsHash train, RsHash &valid, QString valid_file,
     printf("OK. Best result: alfa = %1.4f  err = %3.4f\n", best_alfa, minerr*100);
 }
 
-// the golden section optimization
+// the golden section optimization (1-Dim)
 void optimize_gsect(RsHash train, RsHash &valid, QString valid_file,
                     RsHash (*get_pred)(RsHash, RsHash &, float) ) {
     printf("Gold section optimizing...\n");
@@ -74,7 +74,15 @@ void optimize_gsect(RsHash train, RsHash &valid, QString valid_file,
     printf("OK. Best result: gama = %1.4f  err = %3.4f\n", best_gama, minerr*100);
 }
 
+void optimize_gd(RsHash train, RsHash valid, QString valid_file,
+                 RsHash (*get_pred)(RsHash, RsHash &, float) )
+{
+    printf("Gradient descent optimizing...\n");
 
+
+
+//    printf("OK. Best result: a1=%1.4f, a2=%1.4f, a3=%1.4f, err = %3.4f\n", best_gama, minerr*100);
+}
 
 
 
