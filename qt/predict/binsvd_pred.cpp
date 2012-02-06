@@ -27,11 +27,11 @@ QHash<int, QList<int> > load_item_users(QHash<int, QList<int> > user_items)
     return item_users;
 }
 
-QHash<int, QList<int> > load_user_negatives(QString file_name)
+QHash<int, QList<int> > load_user_negatives(QString file_name, bool verbose)
 {
     QHash<int, QList<int> > user_negatives;
 
-    printf("Start loading set from %s ... ", qPrintable(file_name));
+    if (verbose) printf("Start loading set from %s ... ", qPrintable(file_name));
 
     QFile binfile(file_name + ".bin");
     if (!binfile.exists())
@@ -76,7 +76,7 @@ QHash<int, QList<int> > load_user_negatives(QString file_name)
         bin >> user_negatives;
         binfile.close();
     }
-    printf("OK\n");
+    if (verbose) printf("OK\n");
     return user_negatives;
 }
 
@@ -160,24 +160,31 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 void save_factors();
 RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
-int steps = 300, fact_n = 10;
-float alfa = 0.1, lambda = 0.1;
+int steps = 1, fact_n = 10;
+float alfa = 0.01, lambda = 0.01;
 
-void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, bool verbose)
+void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
+                        QList<float> p, bool verbose)
 {
     if (verbose) printf("Start binsvd studying...\n");
 
+    if (!p.empty())
+    {
+        fact_n = p[0];
+        alfa = p[1];
+        lambda = p[2];
+    }
     double min_err = 1, last_err[4] = {1,1,1,1};
     int min_err_step = 1;
 
-    stringstream ss;
+    std::stringstream ss;
     ss<<"../../user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
     QString file_name = QString::fromStdString(ss.str());
     QFile binfile(file_name + ".bin");
     if (!binfile.exists())
     {
         // create and fill data structures
-        QHash<int, QList<int> > user_negatives = load_user_negatives(train_neg_fn);
+        QHash<int, QList<int> > user_negatives = load_user_negatives(train_neg_fn, verbose);
         QHash<int, QList<int> > user_positives = load_user_positives(train);
         QHash<int, QList<int> > item_negatives = load_item_users(user_negatives);
         QHash<int, QList<int> > item_positives = load_item_users(user_positives);
@@ -193,7 +200,7 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
 
             // update USER factors
             QList<int> users = user_positives.keys();
-#pragma omp parallel for
+//#pragma omp parallel for
             for(int ui = 0; ui < un; ++ui)
             {
                 int u = users[ui];
@@ -244,7 +251,7 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
             j = 0;
             QList<int> items = item_negatives.keys().toSet().unite(item_positives.keys().toSet()).toList();
             int in = item_positives.count();
-#pragma omp parallel for
+//#pragma omp parallel for
             for(int ii = 0; ii < in; ++ii)
             {
                 int i = items[ii];
@@ -330,7 +337,7 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
 void save_factors() {
     printf("Saving factors to files... ");
 
-    stringstream ss;
+    std::stringstream ss;
     ss<<"../../user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
     QString file_name = QString::fromStdString(ss.str());
 
@@ -392,6 +399,13 @@ RsHash binsvd_pred::predict(RsHash valid, bool verbose)
     if (verbose) printf("ok\n");
 
     return valid;
+}
+
+RsHash binsvd_pred::study_and_predict(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
+                                      QList<float> p, bool verbose)
+{
+    study(train, valid, train_neg_fn, valid_fn, p, verbose);
+    return predict(valid, verbose);
 }
 
 

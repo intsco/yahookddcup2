@@ -6,7 +6,10 @@
 
 namespace binsvd_pred 
 {
-    void study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, bool verbose);
+    RsHash study_and_predict(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
+                                      QList<float> p, bool verbose);
+    void study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
+               QList<float> p, bool verbose);
     RsHash predict(RsHash valid, bool verbose);
 }
 

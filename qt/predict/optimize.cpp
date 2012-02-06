@@ -74,14 +74,45 @@ void optimize_gsect(RsHash train, RsHash &valid, QString valid_file,
     printf("OK. Best result: gama = %1.4f  err = %3.4f\n", best_gama, minerr*100);
 }
 
-void optimize_gd(RsHash train, RsHash valid, QString valid_file,
-                 RsHash (*get_pred)(RsHash, RsHash &, float) )
+void optimize_gd(RsHash train, RsHash valid, QString valid_fn, QString train_neg_fn) // only valid set needed
 {
     printf("Gradient descent optimizing...\n");
 
+    QList<float> p;
+    p.append(10);
+    p.append(0.01);
+    p.append(0.01);
+    double py = estimate(binsvd_pred::study_and_predict(
+                             train, valid, train_neg_fn, valid_fn, p, false), valid_fn, false);
+    printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], py * 100);
 
+    QList<float> pp;
+    pp = p;
+    p[0] = 20;
+    p[1] = 0.001;
+    p[2] = 0.1;
+    double y = estimate(binsvd_pred::study_and_predict(
+                            train, valid, train_neg_fn, valid_fn, p, false), valid_fn, false);
+    printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y * 100);
 
-//    printf("OK. Best result: a1=%1.4f, a2=%1.4f, a3=%1.4f, err = %3.4f\n", best_gama, minerr*100);
+    float nu = 0.01; // study speed
+    while(abs(y - py) > 0.0001)
+    {
+        for(int i = 0; i < p.count(); ++i)
+        {
+            float dp = p[i] - pp[i];
+            pp[i] = p[i];
+            p[i] = p[i] - nu * (y - py) / dp; // moving along gradient
+            if (i == 0) p[i] = floor(p[i]);
+        }
+        py = y;
+        y = estimate(binsvd_pred::study_and_predict(
+                             train, valid, train_neg_fn, valid_fn, p, false), valid_fn, false);
+        printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y * 100);
+    }
+
+    printf("OK. Best result: p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n",
+           p[0], p[1], p[2], y * 100);
 }
 
 
