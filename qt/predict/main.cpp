@@ -78,7 +78,7 @@ TaxHash load_tracks(QString tracks_fn) {
 }
 
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     //QCoreApplication a(argc, argv);
     //QCoreApplication::setApplicationName("YahooKDDCup2 Prediction");
@@ -90,9 +90,16 @@ int main(int argc, char *argv[])
     myTimer.start();
     setbuf(stdout, NULL);
 
-    QString train_file = "../../train_sample";
-    QString valid_file = "../../valid_sample";
+    QString postfix = "";
+    if (QString::fromAscii(argv[1]) == "sample")
+        postfix = "_sample";
+    QString train_file = "../../train";
+    train_file.append(postfix);
+    QString valid_file = "../../valid";
+    valid_file.append(postfix);
     QString tracks_file = "../../_trackData.txt";
+    QString negatives_train_file = "../../train_negatives";
+    negatives_train_file.append(postfix);
 
     RsHash train = load_set(train_file, TRAIN);
     RsHash valid = load_set(valid_file, VALID);
@@ -104,9 +111,9 @@ int main(int argc, char *argv[])
 //    check(train, "../i2i_weights");
 //    itemnn_pred::study(train, true);
 //    itemnn_pred::predict(train, valid, 1, true);
-//    estimate(valid, valid_file, true);
+//    estimate(valid, valid_filerr, true);
 
-    binsvd_pred::study(train, valid, "../../train_negatives_sample", valid_file, true);
+    binsvd_pred::study(train, valid, negatives_train_file, valid_file, true);
     estimate(binsvd_pred::predict(valid, true), valid_file, true);
 
 //    optimize_gsect(train, valid, valid_file, itemnn_pred::get_predictions);

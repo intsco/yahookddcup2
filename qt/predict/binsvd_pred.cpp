@@ -158,16 +158,16 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 
 
 void save_factors();
-RsHash predict(RsHash &valid, bool verbose);
+RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
-int steps = 50, fact_n = 100;
-float alfa = 0.01, lambda = 0.01;
+int steps = 300, fact_n = 10;
+float alfa = 0.1, lambda = 0.1;
 
 void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, bool verbose)
 {
     if (verbose) printf("Start binsvd studying...\n");
 
-    double min_err = 100;
+    double min_err = 1, last_err[4] = {1,1,1,1};
     int min_err_step = 1;
 
     stringstream ss;
@@ -188,12 +188,12 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
         // by step
         for (int st = 1; st <= steps; st++)
         {
-            if (verbose) printf("%d step: \n", st);
+            if (verbose) printf("%d step: ", st);
             int j = 0;
 
             // update USER factors
             QList<int> users = user_positives.keys();
-//#pragma omp parallel for
+#pragma omp parallel for
             for(int ui = 0; ui < un; ++ui)
             {
                 int u = users[ui];
@@ -232,19 +232,19 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                     }
                 }
 //#pragma omp critical
-                {
-                j++;
-                if (verbose && j % 100 == 0)
-                    printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
-                }
+//                {
+//                j++;
+//                if (verbose && j % 100 == 0)
+//                    printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
+//                }
             }
 
             // update ITEM factors
-            printf("\n");
+//            printf("\n");
             j = 0;
             QList<int> items = item_negatives.keys().toSet().unite(item_positives.keys().toSet()).toList();
             int in = item_positives.count();
-//#pragma omp parallel for
+#pragma omp parallel for
             for(int ii = 0; ii < in; ++ii)
             {
                 int i = items[ii];
@@ -279,27 +279,35 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                             user_f = user_factors[u].value(fi);
                             item_f = item_factors[i].value(fi);
                             //user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
-                            item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
+                            item_factors[i][fi] = item_f + alfa/st * (err * user_f - lambda * item_f);
                         }
                     }
                 }
 //#pragma omp critical
-                {
-                j++;
-                if (verbose && j % 100 == 0)
-                    printf("%d items and %2.2f %% processed\r", j, (float)j / in * 100);
-                }
+//                {
+//                j++;
+//                if (verbose && j % 100 == 0)
+//                    printf("%d items and %2.2f %% processed\r", j, (float)j / in * 100);
+//                }
             }
 
-            printf("\n");
-            // calculate error
-            double err = estimate(binsvd_pred::predict(valid, false), valid_fn, false);
-            if (min_err > err)
+            double err = estimate(predict(valid, false), valid_fn, false);
+
+            if (err < min_err)
             {
                 min_err = err;
                 min_err_step = st;
             }
-            printf("error rate: %2.2f\n", err*100);
+            if (verbose) printf("error %2.3f\n", err*100);
+
+            last_err[3] = last_err[2];
+            last_err[2] = last_err[1];
+            last_err[1] = last_err[0];
+            last_err[0] = err;
+            if (st > 30 and ( (abs(last_err[1] - last_err[0]) < 0.0001 
+                            and abs(last_err[2] - last_err[1]) < 0.0001 and abs(last_err[3] - last_err[2]) < 0.0001)
+                            or last_err[0] - last_err[3] > 0.01) )
+                break;
         }
         //save_factors();
     }
@@ -316,7 +324,7 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
         bin2 >> item_factors;
         binfile2.close();
     }
-    if (verbose) printf("ok (min error %2.2f on %d step)\n", min_err, min_err_step);
+    if (verbose) printf("ok (min error %2.2f on %d step)\n", min_err*100, min_err_step);
 }
 
 void save_factors() {
@@ -343,7 +351,7 @@ void save_factors() {
     printf("ok\n");
 }
 
-RsHash binsvd_pred::predict(RsHash &valid, bool verbose)
+RsHash binsvd_pred::predict(RsHash valid, bool verbose)
 {
     if (verbose) printf("Binsvd predicting...\n");
 
@@ -383,7 +391,7 @@ RsHash binsvd_pred::predict(RsHash &valid, bool verbose)
 
     if (verbose) printf("ok\n");
 
-    return new_valid;
+    return valid;
 }
 
 

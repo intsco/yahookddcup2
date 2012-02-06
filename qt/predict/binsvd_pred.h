@@ -4,11 +4,10 @@
 #include "core.h"
 #include "estimate.h"
 
-using namespace std;
-
-namespace binsvd_pred {
+namespace binsvd_pred 
+{
     void study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, bool verbose);
-    RsHash predict(RsHash &valid, bool verbose);
+    RsHash predict(RsHash valid, bool verbose);
 }
 
 #endif // BINSVD_PRED_H
