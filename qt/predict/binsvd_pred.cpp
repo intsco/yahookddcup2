@@ -162,8 +162,8 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 void save_factors();
 RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
-int steps = 10, fact_n = 10;
-float alfa = 0.01, lambda = 0.01;
+int steps = 50, fact_n = 10;
+float alfa = 0.001, lambda = 0.01;
 
 void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, bool verbose)
 {
@@ -190,7 +190,7 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
         // by step
         for (int st = 1; st <= steps; st++)
         {
-            if (verbose) printf("%d step: \n", st);
+            if (verbose) printf("%d step: ", st);
             int j = 0;
 
             // update USER factors
@@ -233,18 +233,17 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                         }
                     }
                 }
-#pragma omp critical
-                {
-                j++;
-                if (verbose && j % 100 == 0)
-                    printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
-                }
+//#pragma omp critical
+//                {
+//                j++;
+//                if (verbose && j % 100 == 0)
+//                    printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
+//                }
             }
 
             // update ITEM factors
-            printf("\n");
+//            printf("\n");
             j = 0;
-            // TO-DO: not all pos_item keys are contained in neg_items
             QList<int> items = item_negatives.keys().toSet().unite(item_positives.keys().toSet()).toList();
             int in = item_positives.count();
 #pragma omp parallel for
@@ -286,12 +285,12 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                         }
                     }
                 }
-#pragma omp critical
-                {
-                j++;
-                if (verbose && j % 100 == 0)
-                    printf("%d items and %2.2f %% processed\r", j, (float)j / in * 100);
-                }
+//#pragma omp critical
+//                {
+//                j++;
+//                if (verbose && j % 100 == 0)
+//                    printf("%d items and %2.2f %% processed\r", j, (float)j / in * 100);
+//                }
             }
 
             double err = estimate(predict(valid, false), valid_fn, false);
@@ -301,7 +300,7 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                 min_err_step = st;
             }
 
-            printf("\nerror: %2.2f\n", err*100);
+            if (verbose) printf("error %2.2f\n", err*100);
         }
         //save_factors();
     }
