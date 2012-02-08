@@ -70,7 +70,7 @@ void itemnn_pred::study(RsHash train, bool verbose) {
 
         //QList< QPair<int, QSet<int> > >::const_iter it;
         //for(it = items_users_sets.constBegin(); it < items_users_sets.constEnd(); ++it) {
-#pragma omp parallel for schedule(dynamic, 50)
+//#pragma omp parallel for schedule(dynamic, 50)
         for(int n = 0; n < items_n; n++) {
 
             // calculate weights
@@ -116,13 +116,13 @@ void itemnn_pred::study(RsHash train, bool verbose) {
                 QPair<int, int> pair(i, i_neighb[k].first);
                 //pair.first = i;
                 //pair.second = i_neighb[k].first;
-#pragma omp critical
+//#pragma omp critical
                 {
                     i2i_weights.insert(pair, i_neighb[k].second);
                 }
                 k++;
             }
-#pragma omp critical
+//#pragma omp critical
             {
                 items_processed++;
                 if (items_processed % 1 == 0)

@@ -138,7 +138,7 @@ void create_factors(QHash<int, QVector<float> > &factors, RsHash train, int fact
         factors[*it] = vect;
         for(int fi = 0; fi < fact_n; fi++)
         {
-            float rand_v = (float)(qrand() % 10) / 1000 + 0.0005;
+            float rand_v = (float)(qrand() % 10) / 100000 + 0.000005;
             factors[*it][fi] = rand_v;
         }
         if (factors[*it].count() < fact_n)
@@ -160,7 +160,7 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 void save_factors();
 RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
-int steps = 1, fact_n = 10;
+int steps = 20, fact_n = 60;
 float alfa = 0.01, lambda = 0.01;
 
 void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
@@ -219,11 +219,6 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                     {
                         int i = *it2;
 
-                        if (user_factors[u].count() < fact_n || item_factors[i].count() < fact_n)
-                        {
-                            printf("%d  %d,  %d  %d\n", u, user_factors[u].count(), i, item_factors[i].count());
-                        }
-
                         float pr = dot_product(user_factors[u], item_factors[i], fact_n);
                         float err = r - pr;
 
@@ -238,12 +233,6 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                         }
                     }
                 }
-//#pragma omp critical
-//                {
-//                j++;
-//                if (verbose && j % 100 == 0)
-//                    printf("%d users and %2.2f %% processed\r", j, (float)j / un * 100);
-//                }
             }
 
             // update ITEM factors
@@ -286,16 +275,10 @@ void binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStrin
                             user_f = user_factors[u].value(fi);
                             item_f = item_factors[i].value(fi);
                             //user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
-                            item_factors[i][fi] = item_f + alfa/st * (err * user_f - lambda * item_f);
+                            item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
                         }
                     }
                 }
-//#pragma omp critical
-//                {
-//                j++;
-//                if (verbose && j % 100 == 0)
-//                    printf("%d items and %2.2f %% processed\r", j, (float)j / in * 100);
-//                }
             }
 
             double err = estimate(predict(valid, false), valid_fn, false);

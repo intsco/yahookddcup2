@@ -91,8 +91,7 @@ int main(int argc, char* argv[])
     setbuf(stdout, NULL);
 
     QString postfix = "";
-    if (QString::fromAscii(argv[1]) == "sample")
-        postfix = "_sample";
+    if (QString::fromAscii(argv[1]) == "sample") postfix = "_sample";
     QString train_file = "../../train";
     train_file.append(postfix);
     QString valid_fn = "../../valid";
@@ -113,9 +112,9 @@ int main(int argc, char* argv[])
 //    itemnn_pred::predict(train, valid, 1, true);
 //    estimate(valid, valid_fnrr, true);
 
-//    binsvd_pred::study(train, valid, negatives_train_file, valid_fn, QList<float>(), true);
-//    estimate(binsvd_pred::predict(valid, true), valid_fn, true);
-    optimize_gd(train, valid, valid_fn, negatives_train_file);
+    binsvd_pred::study(train, valid, negatives_train_file, valid_fn, QList<float>(), true);
+    estimate(binsvd_pred::predict(valid, true), valid_fn, true);
+//    optimize_gd(train, valid, valid_fn, negatives_train_file);
 
 //    optimize_gsect(train, valid, valid_fn, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_fn, itemnn_pred::get_predictions);
