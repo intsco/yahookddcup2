@@ -74,7 +74,7 @@ void optimize_gsect(RsHash train, RsHash &valid, QString valid_file,
     printf("OK. Best result: gama = %1.4f  err = %3.4f\n", best_gama, minerr*100);
 }
 
-void optimize_gd(RsHash train, RsHash valid, QString valid_fn, QString train_neg_fn) // only valid set needed
+void optimize_gd(RsHash train, RsHash valid, TaxHash tracks, QString valid_fn, QString train_neg_fn)
 {
     printf("Gradient descent optimizing...\n");
 
@@ -82,7 +82,7 @@ void optimize_gd(RsHash train, RsHash valid, QString valid_fn, QString train_neg
     p.append(10);
     p.append(0.01);
     p.append(0.01);
-    double py = binsvd_pred::study(train, valid, train_neg_fn, valid_fn, p, false);
+    double py = binsvd_pred::study(train, valid, tracks, train_neg_fn, valid_fn, p, false);
     printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], py);
 
     QList<float> pp;
@@ -90,7 +90,7 @@ void optimize_gd(RsHash train, RsHash valid, QString valid_fn, QString train_neg
     p[0] = 20;
     p[1] = 0.001;
     p[2] = 0.1;
-    double y = binsvd_pred::study(train, valid, train_neg_fn, valid_fn, p, false);
+    double y = binsvd_pred::study(train, valid, tracks, train_neg_fn, valid_fn, p, false);
     printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y);
 
     float nu = 0.01; // study speed
@@ -104,7 +104,7 @@ void optimize_gd(RsHash train, RsHash valid, QString valid_fn, QString train_neg
             if (i == 0) p[i] = floor(p[i]);
         }
         py = y;
-        y = binsvd_pred::study(train, valid, train_neg_fn, valid_fn, p, false);
+        y = binsvd_pred::study(train, valid, tracks, train_neg_fn, valid_fn, p, false);
         printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y);
     }
 

@@ -162,12 +162,13 @@ def main() :
 	if __name__ == '__main__' :
 		Man = {
 			'lock' : mp.Manager().Lock(),
-			'train_fn' : '../../train',
-			'train_negatives_fn' : '../../train_negatives',
-			'processes' : 24}
+			'train_fn' : '../../train_sample',
+			'tracks_fn' : '../../_trackData',
+			'train_negatives_fn' : '../../train_negatives_sample',
+			'processes' : 2}
 
 		# Loading data
-		users_info = load_trainset(Man['train_fn'], '')
+		users_info = load_trainset(Man['train_fn'], Man['tracks_fn'])
 		users, users_rs = [el for el in users_info]
 
 		# Getting items hi rating probs

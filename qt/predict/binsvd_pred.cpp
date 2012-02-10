@@ -27,7 +27,7 @@ QHash<int, QVector<int> > load_item_users(QHash<int, QVector<int> > user_items)
     return item_users;
 }
 
-QHash<int, QVector<int> > load_user_negatives(QString file_name, bool verbose)
+QHash<int, QVector<int> > load_user_negatives(QString file_name, TaxHash tracks, bool verbose)
 {
     QHash<int, QVector<int> > user_negatives;
 
@@ -57,7 +57,8 @@ QHash<int, QVector<int> > load_user_negatives(QString file_name, bool verbose)
             {
                 list = line.split('\t');
                 i = list.at(0).toInt();
-                user_negatives[u].append(i);
+                if (tracks.contains(i))
+                    user_negatives[u].append(i);
             }
         }
         file.close();
@@ -80,7 +81,7 @@ QHash<int, QVector<int> > load_user_negatives(QString file_name, bool verbose)
     return user_negatives;
 }
 
-QHash<int, QVector<int> > load_user_positives(RsHash train)
+QHash<int, QVector<int> > load_user_positives(RsHash train, TaxHash tracks)
 {
     QHash<int, QVector<int> > positives;
 
@@ -91,7 +92,7 @@ QHash<int, QVector<int> > load_user_positives(RsHash train)
         QHash<int, float>::const_iterator it2;
         for(it2 = it.value().constBegin(); it2 != it.value().constEnd(); ++it2)
         {
-            if (it2.value() >= 80) {
+            if (tracks.contains(it2.key()) && it2.value() >= 80) {
                 positives[it.key()].append(it2.key());
             }
         }
@@ -160,10 +161,10 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 void save_factors();
 RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
-int steps = 200, fact_n = 60;
+int steps = 20, fact_n = 60;
 float alfa = 0.01, lambda = 0.01;
 
-double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
+double binsvd_pred::study(RsHash train, RsHash valid, TaxHash tracks, QString train_neg_fn, QString valid_fn,
                         QList<float> p, bool verbose)
 {
     if (verbose) printf("Start binsvd studying...\n");
@@ -184,8 +185,8 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
     if (!binfile.exists())
     {
         // create and fill data structures
-        QHash<int, QVector<int> > user_negatives = load_user_negatives(train_neg_fn, verbose);
-        QHash<int, QVector<int> > user_positives = load_user_positives(train);
+        QHash<int, QVector<int> > user_negatives = load_user_negatives(train_neg_fn, tracks, verbose);
+        QHash<int, QVector<int> > user_positives = load_user_positives(train, tracks);
         create_factors(user_factors, train, fact_n, 1);
         create_factors(item_factors, train, fact_n, 0);
 
