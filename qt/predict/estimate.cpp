@@ -69,7 +69,7 @@ double estimate(RsHash valid, QString valid_fn, bool verbose) {
         }
     }
     err /= n;
-    if (verbose) printf("Error rate: %3.3f, n=%d\n", err*100, n);
+    if (verbose) printf("Error rate: %3.3f, n=%d\n", err, n);
     file.close();
-    return err;
+    return err * 100;
 }

@@ -82,18 +82,16 @@ void optimize_gd(RsHash train, RsHash valid, QString valid_fn, QString train_neg
     p.append(10);
     p.append(0.01);
     p.append(0.01);
-    double py = estimate(binsvd_pred::study_and_predict(
-                             train, valid, train_neg_fn, valid_fn, p, false), valid_fn, false);
-    printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], py * 100);
+    double py = binsvd_pred::study(train, valid, train_neg_fn, valid_fn, p, false);
+    printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], py);
 
     QList<float> pp;
     pp = p;
     p[0] = 20;
     p[1] = 0.001;
     p[2] = 0.1;
-    double y = estimate(binsvd_pred::study_and_predict(
-                            train, valid, train_neg_fn, valid_fn, p, false), valid_fn, false);
-    printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y * 100);
+    double y = binsvd_pred::study(train, valid, train_neg_fn, valid_fn, p, false);
+    printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y);
 
     float nu = 0.01; // study speed
     while(abs(y - py) > 0.0001)
@@ -106,13 +104,11 @@ void optimize_gd(RsHash train, RsHash valid, QString valid_fn, QString train_neg
             if (i == 0) p[i] = floor(p[i]);
         }
         py = y;
-        y = estimate(binsvd_pred::study_and_predict(
-                             train, valid, train_neg_fn, valid_fn, p, false), valid_fn, false);
-        printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y * 100);
+        y = binsvd_pred::study(train, valid, train_neg_fn, valid_fn, p, false);
+        printf("p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y);
     }
 
-    printf("OK. Best result: p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n",
-           p[0], p[1], p[2], y * 100);
+    printf("OK. Best result: p1=%3.4f, p2=%3.4f, p3=%3.4f, err = %3.4f\n", p[0], p[1], p[2], y);
 }
 
 
