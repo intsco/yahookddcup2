@@ -50,11 +50,13 @@ def get_items_hi_probs(users_rs, Man) :  # only for tracks
 	print "prob_sum =", prob_sum
 	return i_hi_p_items, i_hi_p_probsums
 
-def has_rated(rs, item) :
+def has_rated(rs, tracks, item) :
 	k = 0
 	while (k <= len(rs)-2) :
 		if (rs[k] == item) :
 			return True
+		elif (tracks.has_key(item) and tracks[item][0] == r[k] or tracks[item][1] == r[k]) :
+			return True		
 		k += 2
 	return False
 	
@@ -65,8 +67,8 @@ def get_hi_r_numb(rs) :
 			n += 1
 		k += 2
 	return n
-
-def get_rand_user_negatives(rs, Man) :
+	
+def get_rand_user_negatives(rs, tracks, Man) :
 	non_r_items = []
 	hi_r_numb = get_hi_r_numb(rs)
 	while (len(non_r_items) < hi_r_numb) :
@@ -90,11 +92,11 @@ def get_rand_user_negatives(rs, Man) :
 		#print len(rs), len(non_r_items)
 		#Man['lock'].release()
 			
-		if (not has_rated(rs, item) and item not in non_r_items and item >= 0) :
+		if (not has_rated(rs, tracks, item) and item not in non_r_items and item >= 0) :
 			non_r_items.append(item)
 	return non_r_items
   
-def get_user_nagatives(user, rs, Man) :
+def get_user_negatives(user, rs, tracks, Man) :
 	first = 0
 	last = len(rs) - 2 # last item
 	user_negatives = [] # items which user did not rated
@@ -104,13 +106,13 @@ def get_user_nagatives(user, rs, Man) :
 	#    Man['lock'].release()    
 
 	# get user negative items
-	for non_r_item in get_rand_user_negatives(rs, Man) :
+	for non_r_item in get_rand_user_negatives(rs, tracks, Man) :
 		user_negatives.append(non_r_item)
 
 	return user, user_negatives
 
 
-def draw_negatives(users, users_rs, i_hi_p_items, i_hi_p_probsums, Man) :
+def draw_negatives(users, users_rs, tracks, i_hi_p_items, i_hi_p_probsums, Man) :
 	print "-> Drawing negatives..."
 
 	# preparations
@@ -120,7 +122,7 @@ def draw_negatives(users, users_rs, i_hi_p_items, i_hi_p_probsums, Man) :
 	for user, bounds in users.items() :
 		f = bounds[0]
 		l = bounds[1] # the last but one element (the last item)
-		tasks.append( (get_user_nagatives, (user, users_rs[f:l+1], Man)) )
+		tasks.append( (get_user_negatives, (user, users_rs[f:l+1], tracks, Man)) )
 
 	# parallel computing
 	print "->  parallel computing"
@@ -160,21 +162,27 @@ def save_negatives(users_negatives, Man) :
 
 def main() :
 	if __name__ == '__main__' :
+		if (sys.argv[1] == 'sample') :
+			sample = '_sample'
+		else :
+			sample = ''
 		Man = {
 			'lock' : mp.Manager().Lock(),
-			'train_fn' : '../../train',
-			'train_negatives_fn' : '../../train_negatives',
-			'processes' : 24}
+			'train_fn' : '../../train{0}'.format(sample),
+			'track_fn' : '../../_trackData',
+			'train_negatives_fn' : '../../train_negatives{0}'.format(sample),
+			'processes' : 2}
 
 		# Loading data
 		users_info = load_trainset(Man['train_fn'], '')
 		users, users_rs = [el for el in users_info]
+		tracks = load_tracks_taxonomy(Man['track_fn'])
 
 		# Getting items hi rating probs
 		i_hi_p_items, i_hi_p_probsums = get_items_hi_probs(users_rs, Man)
 
 		# Draw negative items   
-		users_negatives = draw_negatives(users, users_rs, i_hi_p_items, i_hi_p_probsums, Man)
+		users_negatives = draw_negatives(users, users_rs, tracks, i_hi_p_items, i_hi_p_probsums, Man)
 
 		# Save negatives
 		save_negatives(users_negatives, Man)
