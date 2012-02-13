@@ -203,6 +203,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
                 int u = users[ui];
                 QVector<int> u_pos = user_positives[u];
                 QVector<int> u_neg = user_negatives[u];
+                if (u_pos.count() != u_neg.count()) printf("bugs!\n");
 
                 // by negative and positive items
                 for(int r = -1; r <= 1; r += 2)
