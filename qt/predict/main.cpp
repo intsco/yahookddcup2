@@ -96,13 +96,13 @@ int main(int argc, char* argv[])
     train_file.append(postfix);
     QString valid_fn = "../../valid";
     valid_fn.append(postfix);
-    QString tracks_file = "../../_trackData.txt";
     QString negatives_train_file = "../../train_negatives";
     negatives_train_file.append(postfix);
+    QString tracks_file = "../../_trackData.txt";
 
     RsHash train = load_set(train_file, TRAIN);
     RsHash valid = load_set(valid_fn, VALID);
-//    TaxHash tracks = load_tracks(tracks_file);
+    TaxHash tracks = load_tracks(tracks_file);
 
 //    predict(train, valid, tracks);
 //    estimate(valid, valid_fn);

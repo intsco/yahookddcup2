@@ -197,7 +197,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
 
             // by users
             QVector<int> users = user_positives.keys().toVector();
-#pragma omp parallel for
+//#pragma omp parallel for
             for(int ui = 0; ui < un; ++ui)
             {
                 int u = users[ui];
@@ -230,7 +230,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
                             float item_f = i_factors.value(fi);
                             user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
                         }
-#pragma omp critical
+//#pragma omp critical
                         {
                         for(int fi = 0; fi < fact_n; fi++)
                         {
