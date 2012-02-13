@@ -169,14 +169,14 @@ def main() :
 		Man = {
 			'lock' : mp.Manager().Lock(),
 			'train_fn' : '../../train{0}'.format(sample),
-			'track_fn' : '../../_trackData',
+			'tracks_fn' : '../../_trackData',
 			'train_negatives_fn' : '../../train_negatives{0}'.format(sample),
 			'processes' : 24}
 
 		# Loading data
-		users_info = load_trainset(Man['train_fn'], Man['tracks_fn'])
+		users_info = load_trainset(Man['train_fn'],'')
 		users, users_rs = [el for el in users_info]
-		tracks = load_tracks_taxonomy(Man['track_fn'])
+		tracks = load_tracks_taxonomy(Man['tracks_fn'])
 
 		# Getting items hi rating probs
 		i_hi_p_items, i_hi_p_probsums = get_items_hi_probs(users_rs, Man)
