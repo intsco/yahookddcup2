@@ -171,10 +171,10 @@ def main() :
 			'train_fn' : '../../train{0}'.format(sample),
 			'track_fn' : '../../_trackData',
 			'train_negatives_fn' : '../../train_negatives{0}'.format(sample),
-			'processes' : 2}
+			'processes' : 24}
 
 		# Loading data
-		users_info = load_trainset(Man['train_fn'], '')
+		users_info = load_trainset(Man['train_fn'], Man['tracks_fn'])
 		users, users_rs = [el for el in users_info]
 		tracks = load_tracks_taxonomy(Man['track_fn'])
 
