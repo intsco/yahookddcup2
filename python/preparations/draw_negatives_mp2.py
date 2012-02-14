@@ -51,12 +51,11 @@ def get_items_hi_probs(users_rs, Man) :  # only for tracks
 	return i_hi_p_items, i_hi_p_probsums
 
 def has_rated(rs, tracks, item) :
+	album, artist = tracks.get(item, [-1, -1])[0], tracks.get(item, [-1, -1])[1]
 	k = 0
 	while (k <= len(rs)-2) :
-		if (rs[k] == item) :
+		if (rs[k] == item or rs[k] == album or rs[k] == artist) :
 			return True
-		elif (tracks.has_key(item) and tracks[item][0] == r[k] or tracks[item][1] == r[k]) :
-			return True		
 		k += 2
 	return False
 	
@@ -68,7 +67,7 @@ def get_hi_r_numb(rs) :
 		k += 2
 	return n
 	
-def get_rand_user_negatives(rs, tracks, Man) :
+def get_user_rand_negatives(user, rs, tracks, Man) :
 	non_r_items = []
 	hi_r_numb = get_hi_r_numb(rs)
 	while (len(non_r_items) < hi_r_numb) :
@@ -94,23 +93,7 @@ def get_rand_user_negatives(rs, tracks, Man) :
 			
 		if (not has_rated(rs, tracks, item) and item not in non_r_items and item >= 0) :
 			non_r_items.append(item)
-	return non_r_items
-  
-def get_user_negatives(user, rs, tracks, Man) :
-	first = 0
-	last = len(rs) - 2 # last item
-	user_negatives = [] # items which user did not rated
-
-	#    Man['lock'].acquire()
-	#    print 'u=',user, 
-	#    Man['lock'].release()    
-
-	# get user negative items
-	for non_r_item in get_rand_user_negatives(rs, tracks, Man) :
-		user_negatives.append(non_r_item)
-
-	return user, user_negatives
-
+	return user, non_r_items
 
 def draw_negatives(users, users_rs, tracks, i_hi_p_items, i_hi_p_probsums, Man) :
 	print "-> Drawing negatives..."
@@ -122,7 +105,7 @@ def draw_negatives(users, users_rs, tracks, i_hi_p_items, i_hi_p_probsums, Man) 
 	for user, bounds in users.items() :
 		f = bounds[0]
 		l = bounds[1] # the last but one element (the last item)
-		tasks.append( (get_user_negatives, (user, users_rs[f:l+1], tracks, Man)) )
+		tasks.append( (get_user_rand_negatives, (user, users_rs[f:l+1], tracks, Man)) )
 
 	# parallel computing
 	print "->  parallel computing"
@@ -166,12 +149,13 @@ def main() :
 			sample = '_sample'
 		else :
 			sample = ''
+		procs_n = int(sys.argv[2])
 		Man = {
 			'lock' : mp.Manager().Lock(),
 			'train_fn' : '../../train{0}'.format(sample),
 			'tracks_fn' : '../../_trackData',
 			'train_negatives_fn' : '../../train_negatives{0}'.format(sample),
-			'processes' : 24}
+			'processes' : procs_n}
 
 		# Loading data
 		users_info = load_trainset(Man['train_fn'],'')
