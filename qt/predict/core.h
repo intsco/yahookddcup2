@@ -25,6 +25,7 @@
 
 #define TRAIN 0
 #define VALID 1
+#define TEST 2
 
 typedef QHash<int, QHash<int, float> > RsHash;
 typedef QHashIterator<int, QHash<int, float> > RsHashIter;

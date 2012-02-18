@@ -24,14 +24,15 @@ SOURCES += main.cpp \
     estimate.cpp \
     itemnn_pred.cpp \
     check_i2i_weights.cpp \
-    binsvd_pred.cpp
+    binsvd_pred.cpp \
+    loader.cpp
 
 HEADERS += \
     content_pred.h \
     core.h \
-    main.h \
     optimize.h \
     estimate.h \
     itemnn_pred.h \
     check_i2i_weights.h \
-    binsvd_pred.h
+    binsvd_pred.h \
+    loader.h
