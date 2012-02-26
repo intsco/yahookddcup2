@@ -27,10 +27,10 @@
 #define VALID 1
 #define TEST 2
 
-typedef QHash<int, float> UserRs;
-typedef QHash<int, QHash<int, float> > RsHash;
-typedef QHashIterator<int, QHash<int, float> > RsHashIter;
-typedef QMutableHashIterator<int, QHash<int, float> > RsHashIterMut;
+typedef QHash<int, double> UserRs;
+typedef QHash<int, QHash<int, double> > RsHash;
+typedef QHashIterator<int, QHash<int, double> > RsHashIter;
+typedef QMutableHashIterator<int, QHash<int, double> > RsHashIterMut;
 typedef QHash<int, QVector<int> > TaxHash;
 
 #endif // MAIN_H
