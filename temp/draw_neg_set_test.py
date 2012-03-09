@@ -32,7 +32,7 @@ def append_items_numbs(items_numbs, items_freqs, ind) :
             items_numbs[item][ind] = numb
 
 
-fqt = codecs.open("../train_negatives_sample.txt", 'r')
+fqt = codecs.open("../train_negatives_sample_qt.txt", 'r')
 fpy = codecs.open("../train_negatives_sample_py.txt", 'r')
 f = codecs.open("../all_train.txt", 'r')
 ft = codecs.open("../test.txt", 'r')
