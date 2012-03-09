@@ -3,7 +3,7 @@
 
 #include <algorithm>
 #include <stdlib.h>
-#include <windows.h>
+//#include <windows.h>
 #include <omp.h>
 #include <cmath>
 #include <sstream>

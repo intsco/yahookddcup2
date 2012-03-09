@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    Sleep(3000);
+//    Sleep(3000);
 
     printf("Start\n");
     QTime myTimer;

@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     if (QString::fromAscii(argv[1]) == "sample") postfix = "_sample";
     QString train_file = "../../train";
     train_file.append(postfix);
-    QString valid_fn = "../../valid";
+    QString valid_fn = "../../test";
     valid_fn.append(postfix);
     QString negatives_train_file = "../../train_negatives";
     negatives_train_file.append(postfix);
