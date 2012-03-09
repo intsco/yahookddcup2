@@ -160,6 +160,8 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 void save_factors();
 RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
+void check_user_negatives(RsHash, UserRs urs, QVector<int> u_pos, QVector<int> u_neg);
+
 int steps = 200, fact_n = 60;
 float alfa = 0.01, lambda = 0.01;
 
@@ -213,6 +215,9 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
                     if (r == -1) items_list = u_neg;
                     else items_list = u_pos;
                     if (u_neg.count() != u_pos.count()) printf("bugs!\n");
+
+                    if (u_neg.count() != u_pos.count()) printf("bugs!\n");
+                    //check_user_negatives(train, train[u], u_pos, u_neg);
 
                     QVector<int>::const_iterator it2;
                     for(it2 = items_list.constBegin(); it2 != items_list.constEnd(); ++it2)
@@ -348,12 +353,40 @@ RsHash binsvd_pred::predict(RsHash valid, bool verbose)
     return valid;
 }
 
-/*RsHash binsvd_pred::study_and_predict(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
-                                      QList<float> p, bool verbose)
-{
-    study(train, valid, train_neg_fn, valid_fn, p, verbose);
-    return predict(valid, verbose);
-}*/
+// tmp
+UserRs items_hi_r_numb;
+void check_user_negatives(RsHash train, UserRs urs, QVector<int> u_pos, QVector<int> u_neg) {
+    if (items_hi_r_numb.count() == 0) {
+        // collect items and number of hi ratings
+        for (RsHash::const_iterator it = train.constBegin(); it != train.constEnd(); ++it)
+        {
+            UserRs urs = it.value();
+            for (UserRs::const_iterator it2 = urs.constBegin(); it2 != urs.constEnd(); ++it2)
+            {
+                int i = it2.key();
+                float r = it2.value();
+                if (r >= 80)
+                {
+                    if(!items_hi_r_numb.contains(i))
+                        items_hi_r_numb[i] = 1;
+                    else
+                        items_hi_r_numb[i] += 1;
+                }
+            }
+        }
+    }
+
+    QFile file("../../temp/user_pos_and_neg.csv");
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&file);
+
+    for (int j = 0; j < u_pos.count(); j++)
+    {
+        out<<u_pos[j]<<";"<<urs[u_pos[j]]<<";"<<u_neg[j]<<";"<<items_hi_r_numb[u_neg[j]]<<"\n";
+    }
+
+    file.close();
+}
 
 
 

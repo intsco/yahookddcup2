@@ -1,6 +1,6 @@
 #include "draw_negatives.h"
 
-QVector< QPair<int, float> > get_items_prob_sums(RsHash train)
+QVector< QPair<int, double> > get_items_prob_sums(RsHash train)
 {
     printf("getting item high rate probabilities...");
 
@@ -14,7 +14,7 @@ QVector< QPair<int, float> > get_items_prob_sums(RsHash train)
         for (UserRs::const_iterator it2 = urs.constBegin(); it2 != urs.constEnd(); ++it2)
         {
             int i = it2.key();
-            float r = it2.value();
+            double r = it2.value();
             if (r >= 80)
             {
                 if(!items_hi_r_prob.contains(i))
@@ -29,19 +29,19 @@ QVector< QPair<int, float> > get_items_prob_sums(RsHash train)
     // compute item high rate probabilities
     for(UserRs::iterator it = items_hi_r_prob.begin(); it != items_hi_r_prob.end(); ++it)
     {
-        float p = it.value() / hi_rs_sum;
+        double p = it.value() / hi_rs_sum;
         int i = it.key();
         items_hi_r_prob[i] = p;
     }
 
     // covert QHash with probs to QList with prob sums
     double probs_sum = 0;
-    QVector< QPair<int, float> > items_prob_sums;
+    QVector< QPair<int, double> > items_prob_sums;
     for(UserRs::const_iterator it = items_hi_r_prob.constBegin(); it != items_hi_r_prob.constEnd(); ++it)
     {
         int i = it.key();
         probs_sum += it.value();
-        QPair<int, float> item_sum_pair(i, probs_sum);
+        QPair<int, double> item_sum_pair(i, probs_sum);
         items_prob_sums.append(item_sum_pair);
     }
 
@@ -62,7 +62,7 @@ int get_hi_rated_items(UserRs urs)
 
 bool has_rated(UserRs urs, int neg_item, int neg_item_album, int neg_item_artist)
 {
-    if (urs.contains(neg_item) /*or urs.contains(neg_item_album) or urs.contains(neg_item_artist)*/)
+    if (urs.contains(neg_item) or urs.contains(neg_item_album) or urs.contains(neg_item_artist))
         return true;
 
     return false;
@@ -91,7 +91,7 @@ bool has_rated(UserRs urs, int neg_item, int neg_item_album, int neg_item_artist
 //    return user_neg;
 //}
 
-UserRs get_user_rand_negatives(UserRs urs, QVector< QPair<int, float> > items_prob_sums, TaxHash tracks)
+UserRs get_user_rand_negatives(UserRs urs, QVector< QPair<int, double> > items_prob_sums, TaxHash tracks)
 {
     UserRs user_neg;
 
@@ -99,15 +99,10 @@ UserRs get_user_rand_negatives(UserRs urs, QVector< QPair<int, float> > items_pr
     emptyTax.append(-1);
     emptyTax.append(-1);
 
-    qsrand(QTime::currentTime().msec());
-
     int items_numb = items_prob_sums.count();
     int hi_r_items_numb = get_hi_rated_items(urs);
     int n = items_prob_sums.count();
 
-//    if (hi_r_items_numb >= 10000)
-//        user_neg = get_muchrs_user_rand_neg(items_prob_sums, hi_r_items_numb);
-//    else
     int neg_item_vars_numb = 0;
     while (user_neg.count() < hi_r_items_numb)
     {
@@ -122,8 +117,8 @@ UserRs get_user_rand_negatives(UserRs urs, QVector< QPair<int, float> > items_pr
         else
         {
             // binary search of a random negative item
-            float hi = items_numb, low = 0;
-            float x = ((float)qrand()) / RAND_MAX;
+            double hi = items_numb, low = 0;
+            double x = ((float)rand()) / RAND_MAX;
             while (low < hi)
             {
                 int mid = (low + hi) / 2;
@@ -184,10 +179,12 @@ void save_negatives(RsHash train_neg, QString train_neg_fn)
 void draw_negatives(QString train_fn, QString tracks_fn, QString train_neg_fn)
 {
     printf("drawing negatives...\n");
+//    qsrand(QTime::currentTime().msec());
+    rand();
 
     RsHash train = load_set(train_fn, TRAIN);
     TaxHash tracks = load_tracks(tracks_fn);
-    QVector< QPair<int, float> > items_prob_sums = get_items_prob_sums(train);
+    QVector< QPair<int, double> > items_prob_sums = get_items_prob_sums(train);
 
     int n = train.count(), j = 0;
     RsHash train_neg;

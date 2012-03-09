@@ -19,7 +19,7 @@ RsHash load_set(QString fileName, int set) {
             if (line.contains('|')) {
                 list = line.split('|');
                 u = list.at(0).toInt();
-                QHash<int, float> rs;
+                QHash<int, double> rs;
                 users_rs.insert(u, rs);
             }
             else {
