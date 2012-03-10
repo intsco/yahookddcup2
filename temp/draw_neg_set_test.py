@@ -14,13 +14,17 @@ def get_item_freqs(lines) :
                 item_freqs[item] += 1
     return item_freqs
     
-def filter_hi_rs(lines) :
+def filter_hi_rs(lines, thr, dir) :
     new_lines = []
     for line in lines :
         if ('|' not in line) :
             item, r = line.split('\t')
-            if (int(r) >= 80) :
-                new_lines.append(line)
+            if (dir == 1) :
+                if (int(r) >= thr) :
+                    new_lines.append(line)
+            else :
+                if (int(r) <= thr) :
+                    new_lines.append(line)
     return new_lines
 
 def sort_items(hash) :
@@ -39,13 +43,13 @@ def load_track_tax() :
 
 fqt = codecs.open("../train_negatives_sample.txt", 'r')
 fpy = codecs.open("../train_negatives_sample_py.txt", 'r')
-f = codecs.open("../all_train.txt", 'r')
+f = codecs.open("../train_sample.txt", 'r')
 ft = codecs.open("../test.txt", 'r')
 
 qt_items_freqs = get_item_freqs(fqt.readlines())
 py_items_freqs = get_item_freqs(fpy.readlines())
-items_freqs_train = get_item_freqs(filter_hi_rs(f.readlines()))
-items_freqs_test = get_item_freqs(filter_hi_rs(ft.readlines()))
+items_freqs_train = get_item_freqs(filter_hi_rs(f.readlines(), 80, 1))
+items_freqs_test = get_item_freqs(filter_hi_rs(ft.readlines(), 0, 0))
 
 """qt_items_freqs_sorted = sort_items(qt_items_freqs)
 py_items_freqs_sorted = sort_items(py_items_freqs)
@@ -60,11 +64,11 @@ append_items_numbs(items_numbs, qt_items_freqs, 2)
 append_items_numbs(items_numbs, py_items_freqs, 3)
         
 tracks = load_track_tax()
-for item, numbs in items_numbs :
+for item, numbs in items_numbs.items() :
     if (tracks.has_key(item)) :
         numbs[4] = 1
 
-output = codecs.open("draw_neg_compare.csv", 'w')
+output = codecs.open("draw_neg_compare2.csv", 'w')
 output.write('item;test_numb;train_sample_numb;qt_neg_sample_numb;py_neg_sample_numb;is_track\n')
 """output.write('{0};{1};{2};{3};{4};{5};{6};{7}\n'.
              format("qt_neg_set", "qt_count", "py_neg_set", "py_count", 
