@@ -91,7 +91,8 @@ QHash<int, QVector<int> > load_user_positives(RsHash train)
         QHash<int, float>::const_iterator it2;
         for(it2 = it.value().constBegin(); it2 != it.value().constEnd(); ++it2)
         {
-            if (it2.value() >= 80) {
+            if (it2.value() >= 80)
+            {
                 positives[it.key()].append(it2.key());
             }
         }
