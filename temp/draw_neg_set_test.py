@@ -37,6 +37,8 @@ def load_track_tax() :
         tracks[line.split('|')[0]] = 1
     return tracks
 
+print "Started"
+
 fqt = codecs.open("../train_negatives_sample_qt.txt", 'r')
 fpy = codecs.open("../train_negatives_sample_py.txt", 'r')
 f = codecs.open("../all_train.txt", 'r')
@@ -60,7 +62,7 @@ append_items_numbs(items_numbs, qt_items_freqs, 2)
 append_items_numbs(items_numbs, py_items_freqs, 3)
         
 tracks = load_track_tax()
-for item, numbs in items_numbs :
+for item, numbs in items_numbs.items() :
     if (tracks.has_key(item)) :
         numbs[4] = 1
 
@@ -95,3 +97,5 @@ fqt.close()
 fpy.close()
 f.close()
 ft.close()
+
+print "Finished"
