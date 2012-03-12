@@ -89,7 +89,7 @@ QHash<int, int> get_user_hi_rated(RsHash train)
 
 bool has_rated(UserRs urs, int neg_item, int neg_item_album, int neg_item_artist)
 {
-    if (urs.contains(neg_item) or urs.contains(neg_item_album) or urs.contains(neg_item_artist))
+    if (urs.contains(neg_item))/* or urs.contains(neg_item_album) or urs.contains(neg_item_artist))*/
         return true;
 
     return false;
@@ -253,7 +253,7 @@ void draw_negatives(QString train_fn, QString tracks_fn, QString train_neg_fn)
             printf("%d items and %2.2f %% processed\r", k, ((float)k) / items_n * 100);
     }
     // appending additional items
-    printf("\nappending additional items...\n");
+    printf("\nappending additional items to %d users...\n", users.count());
     while (users.count() > 0)
     {
         int neg_item = items_numbs[rand() % items_numbs.count()].first;

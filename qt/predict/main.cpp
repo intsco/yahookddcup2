@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 
     printf("Finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
     //return a.exec();
-    exit(1);
+    exit(0);
 }
 
 

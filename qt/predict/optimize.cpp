@@ -36,8 +36,8 @@ void optimize_gsect(RsHash train, RsHash &valid, QString valid_file,
                     RsHash (*get_pred)(RsHash, RsHash &, float) ) {
     printf("Gold section optimizing...\n");
 
-    float err = 0.5, errThr = 0.09, minerr = 0.5;
-    float gama = 0, gama_l = 0, gama_h = 5, best_gama = 0;
+    float err = 0.5, errThr = 0.06, minerr = 0.5;
+    float gama = 0, gama_l = 0, gama_h = 0.3, best_gama = 0;
 
     float eps = 0.001, fi = (1 + sqrt(5)) / 2, a = gama_l, b = gama_h;
 

@@ -43,9 +43,9 @@ def load_track_tax() :
 
 print "Started"
 
-fqt = codecs.open("../train_negatives_sample_qt.txt", 'r')
-fpy = codecs.open("../train_negatives_sample_py.txt", 'r')
-f = codecs.open("../train_sample.txt", 'r')
+fqt = codecs.open("../train_negatives_qt.txt", 'r')
+fpy = codecs.open("../train_negatives_py.txt", 'r')
+f = codecs.open("../train.txt", 'r')
 ft = codecs.open("../test.txt", 'r')
 
 qt_items_freqs = get_item_freqs(fqt.readlines())

@@ -50,11 +50,11 @@ def get_items_hi_probs(users_rs, Man) :  # only for tracks
 	print "prob_sum =", prob_sum
 	return i_hi_p_items, i_hi_p_probsums
 
-def has_rated(rs, tracks, item) :
-	album, artist = tracks.get(item, [-1, -1])[0], tracks.get(item, [-1, -1])[1]
+def has_rated(rs, item) :
+	#album, artist = tracks.get(item, [-1, -1])[0], tracks.get(item, [-1, -1])[1]
 	k = 0
 	while (k <= len(rs)-2) :
-		if (rs[k] == item or rs[k] == album or rs[k] == artist) :
+		if (rs[k] == item) :
 			return True
 		k += 2
 	return False
@@ -67,7 +67,7 @@ def get_hi_r_numb(rs) :
 		k += 2
 	return n
 	
-def get_user_rand_negatives(user, rs, tracks, Man) :
+def get_user_rand_negatives(user, rs, Man) :
 	non_r_items = []
 	hi_r_numb = get_hi_r_numb(rs)
 	while (len(non_r_items) < hi_r_numb) :
@@ -91,11 +91,11 @@ def get_user_rand_negatives(user, rs, tracks, Man) :
 		#print len(rs), len(non_r_items)
 		#Man['lock'].release()
 			
-		if (not has_rated(rs, tracks, item) and item not in non_r_items and item >= 0) :
+		if (not has_rated(rs, item) and item not in non_r_items and item >= 0) :
 			non_r_items.append(item)
 	return user, non_r_items
 
-def draw_negatives(users, users_rs, tracks, i_hi_p_items, i_hi_p_probsums, Man) :
+def draw_negatives(users, users_rs, i_hi_p_items, i_hi_p_probsums, Man) :
 	print "-> Drawing negatives..."
 
 	# preparations
@@ -105,7 +105,7 @@ def draw_negatives(users, users_rs, tracks, i_hi_p_items, i_hi_p_probsums, Man) 
 	for user, bounds in users.items() :
 		f = bounds[0]
 		l = bounds[1] # the last but one element (the last item)
-		tasks.append( (get_user_rand_negatives, (user, users_rs[f:l+1], tracks, Man)) )
+		tasks.append( (get_user_rand_negatives, (user, users_rs[f:l+1], Man)) )
 
 	# parallel computing
 	print "->  parallel computing"
@@ -160,13 +160,13 @@ def main() :
 		# Loading data
 		users_info = load_trainset(Man['train_fn'],'')
 		users, users_rs = [el for el in users_info]
-		tracks = load_tracks_taxonomy(Man['tracks_fn'])
+		#tracks = load_tracks_taxonomy(Man['tracks_fn'])
 
 		# Getting items hi rating probs
 		i_hi_p_items, i_hi_p_probsums = get_items_hi_probs(users_rs, Man)
 
 		# Draw negative items   
-		users_negatives = draw_negatives(users, users_rs, tracks, i_hi_p_items, i_hi_p_probsums, Man)
+		users_negatives = draw_negatives(users, users_rs, i_hi_p_items, i_hi_p_probsums, Man)
 
 		# Save negatives
 		save_negatives(users_negatives, Man)

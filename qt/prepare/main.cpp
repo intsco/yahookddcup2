@@ -3,7 +3,7 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+//    QCoreApplication a(argc, argv);
 
 //    Sleep(3000);
 
@@ -30,5 +30,5 @@ int main(int argc, char *argv[])
 
     printf("Finished. Exec time: %3.2f sec\n", (float)myTimer.elapsed() / 1000);
 
-    return a.exec();
+    return exit(0);
 }
