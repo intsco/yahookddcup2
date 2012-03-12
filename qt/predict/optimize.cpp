@@ -32,25 +32,31 @@ void optimize_bf(RsHash train, RsHash &valid, QString valid_file,
 }
 
 // the golden section optimization (1-Dim)
-void optimize_gsect(RsHash train, RsHash &valid, QString valid_file,
-                    RsHash (*get_pred)(RsHash, RsHash &, float) ) {
+void optimize_gsect(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
+                    double study(RsHash, RsHash, QString, QString, QList<float>, bool) ) {
     printf("Gold section optimizing...\n");
 
-    float err = 0.5, errThr = 0.06, minerr = 0.5;
-    float gama = 0, gama_l = 0, gama_h = 0.3, best_gama = 0;
+    QList<float> p;
+    p << 10 << 0.01 << 0;
 
-    float eps = 0.001, fi = (1 + sqrt(5)) / 2, a = gama_l, b = gama_h;
+    float err = 0.5, errThr = 0.09, minerr = 0.5;
+    float gama = 0, gama_l = 0, gama_h = 5, best_gama = 0;
+
+    float eps = 0.0001, fi = (1 + sqrt(5)) / 2, a = gama_l, b = gama_h;
 
     float x1 = b - (b - a) / fi, x2 = a + (b - a) / fi;
-    float err1 = estimate(get_pred(train, valid, x1), valid_file, false),
-        err2 = estimate(get_pred(train, valid, x2), valid_file, false);
+    p[2] = x1;
+    float err1 = study(train, valid, train_neg_fn, valid_fn, p, false);
+    p[2] = x2;
+    float err2 = study(train, valid, train_neg_fn, valid_fn, p, false);
     while (err > errThr && (b-a) > eps) {
         if (err1 > err2) {
             a = x1;
             x1 = x2;
             err1 = err2;
             x2 = a + (b - a) / fi;
-            err2 = estimate(get_pred(train, valid, x2), valid_file, false);
+            p[2] = x2;
+            err2 = study(train, valid, train_neg_fn, valid_fn, p, false);
             err = err2;
             gama = x2;
         }
@@ -59,19 +65,20 @@ void optimize_gsect(RsHash train, RsHash &valid, QString valid_file,
             x2 = x1;
             err2 = err1;
             x1 = b - (b - a) / fi;
-            err1 = estimate(get_pred(train, valid, x1), valid_file, false);
+            p[2] = x1;
+            err1 = study(train, valid, train_neg_fn, valid_fn, p, false);
             err = err1;
             gama = x1;
         }
 
-        printf("gama = %1.4f   err = %3.4f\n", gama, err*100);
+        printf("gama = %1.4f   err = %3.4f\n", gama, err);
         if (err < minerr) {
             minerr = err;
             best_gama = gama;
         }
     }
 
-    printf("OK. Best result: gama = %1.4f  err = %3.4f\n", best_gama, minerr*100);
+    printf("OK. Best result: gama = %1.4f  err = %3.4f\n", best_gama, minerr);
 }
 
 void optimize_gd(RsHash train, RsHash valid, TaxHash tracks, QString valid_fn, QString train_neg_fn)

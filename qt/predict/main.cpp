@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
     RsHash train = load_set(train_file, TRAIN);
     RsHash valid = load_set(valid_fn, VALID);
-    TaxHash tracks = load_tracks(tracks_file);
+//    TaxHash tracks = load_tracks(tracks_file);
 
 //    predict(train, valid, tracks);
 //    estimate(valid, valid_fn);
@@ -39,9 +39,9 @@ int main(int argc, char* argv[])
 //    itemnn_pred::predict(train, valid, 1, true);
 //    estimate(valid, valid_fnrr, true);
 
-    binsvd_pred::study(train, valid, negatives_train_file, valid_fn, QList<float>(), true);
-    estimate(binsvd_pred::predict(valid, true), valid_fn, true);
-//    optimize_gd(train, valid, valid_fn, negatives_train_file);
+//    binsvd_pred::study(train, valid, negatives_train_file, valid_fn, QList<float>(), true);
+//    estimate(binsvd_pred::predict(valid, true), valid_fn, true);
+    optimize_gsect(train, valid, negatives_train_file, valid_fn, binsvd_pred::study);
 
 //    optimize_gsect(train, valid, valid_fn, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_fn, itemnn_pred::get_predictions);
