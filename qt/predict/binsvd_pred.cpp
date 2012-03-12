@@ -163,7 +163,7 @@ RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
 void check_user_negatives(RsHash, UserRs urs, QVector<int> u_pos, QVector<int> u_neg);
 
-int steps = 200, fact_n = 60;
+int steps = 200, fact_n = 10;
 float alfa = 0.01, lambda = 0.01;
 
 double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
