@@ -149,6 +149,8 @@ void create_factors(QHash<int, QVector<float> > &factors, RsHash train, int fact
 
 float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 {
+    if (u_f.count() != fact_n or i_f.count() != fact_n)
+	printf("user or item factors vector wrong size!\n");
     float dot_prod = 0;
     for(int i = 0; i < fact_n; i++)
     {
@@ -163,7 +165,7 @@ RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
 void check_user_negatives(RsHash, UserRs urs, QVector<int> u_pos, QVector<int> u_neg);
 
-int steps = 200, fact_n = 10;
+int steps = 200, fact_n = 60;
 float alfa = 0.01, lambda = 0.01;
 
 double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
@@ -180,12 +182,12 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
     double min_err = 100, last_err[4] = {100,100,100,100};
     int min_err_step = 1;
 
-    std::stringstream ss;
+    /*std::stringstream ss;
     ss<<"../../user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
     QString file_name = QString::fromStdString(ss.str());
     QFile binfile(file_name + ".bin");
     if (!binfile.exists())
-    {
+    {*/
         // create and fill data structures
         QHash<int, QVector<int> > user_negatives = load_user_negatives(train_neg_fn, verbose);
         QHash<int, QVector<int> > user_positives = load_user_positives(train);
@@ -269,7 +271,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
             if (st > 30 and (last_err[0] - last_err[3] > 0.01) ) break;
         }
         //save_factors();
-    }
+    /*}
     else
     {
         binfile.open(QFile::ReadOnly);
@@ -282,7 +284,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
         QDataStream bin2(&binfile2);
         bin2 >> item_factors;
         binfile2.close();
-    }
+    }*/
     if (verbose) printf("ok (min error %2.2f on %d step)\n", min_err, min_err_step);
     return min_err;
 }

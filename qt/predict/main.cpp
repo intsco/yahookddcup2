@@ -39,9 +39,9 @@ int main(int argc, char* argv[])
 //    itemnn_pred::predict(train, valid, 1, true);
 //    estimate(valid, valid_fnrr, true);
 
-//    binsvd_pred::study(train, valid, negatives_train_file, valid_fn, QList<float>(), true);
-//    estimate(binsvd_pred::predict(valid, true), valid_fn, true);
-    optimize_gsect(train, valid, negatives_train_file, valid_fn, binsvd_pred::study);
+    binsvd_pred::study(train, valid, negatives_train_file, valid_fn, QList<float>(), true);
+    estimate(binsvd_pred::predict(valid, true), valid_fn, true);
+//    optimize_gsect(train, valid, negatives_train_file, valid_fn, binsvd_pred::study);
 
 //    optimize_gsect(train, valid, valid_fn, itemnn_pred::get_predictions);
 //    optimize_bf(train, valid, valid_fn, itemnn_pred::get_predictions);

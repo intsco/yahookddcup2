@@ -40,15 +40,19 @@ void optimize_gsect(RsHash train, RsHash valid, QString train_neg_fn, QString va
     p << 10 << 0.01 << 0;
 
     float err = 0.5, errThr = 0.09, minerr = 0.5;
-    float gama = 0, gama_l = 0, gama_h = 5, best_gama = 0;
+    float gama = 0, gama_l = 0.0001, gama_h = 0.2, best_gama = 0;
 
     float eps = 0.0001, fi = (1 + sqrt(5)) / 2, a = gama_l, b = gama_h;
 
     float x1 = b - (b - a) / fi, x2 = a + (b - a) / fi;
+    
     p[2] = x1;
     float err1 = study(train, valid, train_neg_fn, valid_fn, p, false);
+    printf("gama = %1.4f   err = %3.4f\n", x1, err1);
     p[2] = x2;
     float err2 = study(train, valid, train_neg_fn, valid_fn, p, false);
+    printf("gama = %1.4f   err = %3.4f\n", x2, err2);
+    
     while (err > errThr && (b-a) > eps) {
         if (err1 > err2) {
             a = x1;
