@@ -10,7 +10,8 @@ namespace binsvd_pred
     //                                  QList<float> p, bool verbose);
     double study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn, QList<float> p,
                bool verbose);
-    RsHash predict(RsHash valid, bool verbose);
+    RsHash predict(RsHash valid, bool verbose, bool);
+    void save_predictions(RsHash);
 }
 
 #endif // BINSVD_PRED_H

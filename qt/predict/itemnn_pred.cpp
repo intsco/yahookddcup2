@@ -12,8 +12,8 @@ void itemnn_pred::study(RsHash train, bool verbose) {
     if (verbose) printf("Studing item NN ...\n");
 
     QFile binfile("../../tmp_i2i_weights_all.bin");
-    if (!binfile.exists()) {
-
+    if (!binfile.exists()) 
+    {
         if (verbose) printf("Preparing items users sets ...\n");
         // prepare items users sets
         QFile items_users_binfile("../../items_users.bin");

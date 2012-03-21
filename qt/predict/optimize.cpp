@@ -32,51 +32,56 @@ void optimize_bf(RsHash train, RsHash &valid, QString valid_file,
 }
 
 // the golden section optimization (1-Dim)
-void optimize_gsect(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
-                    double study(RsHash, RsHash, QString, QString, QList<float>, bool) ) {
-    printf("Gold section optimizing...\n");
+void optimize_gsect(RsHash train, RsHash valid, TaxHash tracks, QString train_neg_fn, QString valid_fn,
+                    double study(RsHash, RsHash, TaxHash tracks, QString, QString, QList<float>, bool) ) {
+    printf("Golden section optimizing...\n");
 
+    bool verbose = false;
     QList<float> p;
-    p << 10 << 0.01 << 0;
+    p << 0;
 
     float err = 0.5, errThr = 0.09, minerr = 0.5;
-    float gama = 0, gama_l = 0.0001, gama_h = 0.2, best_gama = 0;
+    float gama = 0, gama_l = -50, gama_h = 50, best_gama = 0;
 
-    float eps = 0.0001, fi = (1 + sqrt(5)) / 2, a = gama_l, b = gama_h;
-
+    float eps = 0.0001, fi = (1 + sqrt(5)) / 2, 
+	a = gama_l, b = gama_h;
     float x1 = b - (b - a) / fi, x2 = a + (b - a) / fi;
     
-    p[2] = x1;
-    float err1 = study(train, valid, train_neg_fn, valid_fn, p, false);
+    p[0] = x1;
+    float err1 = study(train, valid, tracks, train_neg_fn, valid_fn, p, verbose);
     printf("gama = %1.4f   err = %3.4f\n", x1, err1);
-    p[2] = x2;
-    float err2 = study(train, valid, train_neg_fn, valid_fn, p, false);
+    p[0] = x2;
+    float err2 = study(train, valid, tracks, train_neg_fn, valid_fn, p, verbose);
     printf("gama = %1.4f   err = %3.4f\n", x2, err2);
     
-    while (err > errThr && (b-a) > eps) {
-        if (err1 > err2) {
+    while (err > errThr && (b-a) > eps) 
+    {
+        if (err1 > err2) 
+        {
             a = x1;
             x1 = x2;
             err1 = err2;
             x2 = a + (b - a) / fi;
-            p[2] = x2;
-            err2 = study(train, valid, train_neg_fn, valid_fn, p, false);
+            p[0] = x2;
+            err2 = study(train, valid, tracks, train_neg_fn, valid_fn, p, verbose);
             err = err2;
             gama = x2;
         }
-        else {
+        else 
+        {
             b = x2;
             x2 = x1;
             err2 = err1;
             x1 = b - (b - a) / fi;
-            p[2] = x1;
-            err1 = study(train, valid, train_neg_fn, valid_fn, p, false);
+            p[0] = x1;
+            err1 = study(train, valid, tracks, train_neg_fn, valid_fn, p, verbose);
             err = err1;
             gama = x1;
         }
 
         printf("gama = %1.4f   err = %3.4f\n", gama, err);
-        if (err < minerr) {
+        if (err < minerr) 
+        {
             minerr = err;
             best_gama = gama;
         }

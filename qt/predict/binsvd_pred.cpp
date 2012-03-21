@@ -150,7 +150,7 @@ void create_factors(QHash<int, QVector<float> > &factors, RsHash train, int fact
 float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 {
     if (u_f.count() != fact_n or i_f.count() != fact_n)
-	printf("user or item factors vector wrong size!\n");
+	printf("u_f.count=%d, i_f.count=%d, fact_n=%d\n", u_f.count(), i_f.count(), fact_n);
     float dot_prod = 0;
     for(int i = 0; i < fact_n; i++)
     {
@@ -161,12 +161,13 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 
 
 void save_factors();
-RsHash binsvd_pred::predict(RsHash valid, bool verbose);
+RsHash binsvd_pred::predict(RsHash valid, bool verbose, bool);
 
 void check_user_negatives(RsHash, UserRs urs, QVector<int> u_pos, QVector<int> u_neg);
 
-int steps = 200, fact_n = 60;
-float alfa = 0.01, lambda = 0.01;
+int steps = 700, fact_n = 1000;
+float alfa = 0.0025,
+    lambda = 0.025, e_thr = 0.2;
 
 double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QString valid_fn,
                         QList<float> p, bool verbose)
@@ -182,13 +183,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
     double min_err = 100, last_err[4] = {100,100,100,100};
     int min_err_step = 1;
 
-    /*std::stringstream ss;
-    ss<<"../../user_factors_st="<<steps<<"_fn="<<fact_n<<"_a="<<alfa<<"_l="<<lambda;
-    QString file_name = QString::fromStdString(ss.str());
-    QFile binfile(file_name + ".bin");
-    if (!binfile.exists())
-    {*/
-        // create and fill data structures
+	// create and fill data structures
         QHash<int, QVector<int> > user_negatives = load_user_negatives(train_neg_fn, verbose);
         QHash<int, QVector<int> > user_positives = load_user_positives(train);
         create_factors(user_factors, train, fact_n, 1);
@@ -218,73 +213,70 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
                     if (r == -1) items_list = u_neg;
                     else items_list = u_pos;
                     if (u_neg.count() != u_pos.count()) printf("bugs!\n");
-
                     if (u_neg.count() != u_pos.count()) printf("bugs!\n");
-                    //check_user_negatives(train, train[u], u_pos, u_neg);
 
                     QVector<int>::const_iterator it2;
                     for(it2 = items_list.constBegin(); it2 != items_list.constEnd(); ++it2)
                     {
                         int i = *it2;
 
-                        QVector<float> i_factors = item_factors[i];
+			QVector<float> i_factors;
+#pragma omp critical
+			{
+                        i_factors = item_factors[i];
+        		}
                         QVector<float> u_factors = user_factors[u];
 
                         float pr = dot_product(u_factors, i_factors, fact_n);
                         float err = r - pr;
-			
 
-                        // by factor
+                        // update user factors
                         for(int fi = 0; fi < fact_n; fi++)
                         {
                             float user_f = u_factors.value(fi);
                             float item_f = i_factors.value(fi);
-                            user_factors[u][fi] = user_f + alfa * (err * item_f - lambda * user_f);
+                            u_factors[fi] = user_f + alfa * (err * item_f - lambda * user_f);
+                        }
+                        user_factors[u] = u_factors;
+
+                        // update item factors
+                        for(int fi = 0; fi < fact_n; fi++)
+                        {
+                            float user_f = u_factors.value(fi);
+                            float item_f = i_factors.value(fi);
+                            i_factors[fi] = item_f + alfa * (err * user_f - lambda * item_f);
                         }
 #pragma omp critical
-                        {
-                        for(int fi = 0; fi < fact_n; fi++)
-                        {
-
-                            float user_f = u_factors.value(fi);
-                            float item_f = i_factors.value(fi);
-                            item_factors[i][fi] = item_f + alfa * (err * user_f - lambda * item_f);
-                        }
-                        }
+                	{
+                        item_factors[i] = i_factors;
+			}
                     }
                 }
             }
 
-            double err = estimate(predict(valid, false), valid_fn, false);
+            double err = estimate(predict(valid, false, false), valid_fn, false);
 
             if (err < min_err)
             {
                 min_err = err;
                 min_err_step = st;
             }
-            if (verbose) printf("error %2.3f\n", err);
+            if (verbose) printf("error %2.3f, alfa=%2.5f, e_thr=%2.5f\n", err, alfa, e_thr);
 
             last_err[3] = last_err[2];
             last_err[2] = last_err[1];
             last_err[1] = last_err[0];
             last_err[0] = err;
             if (st > 30 and (last_err[0] - last_err[3] > 0.01) ) break;
+            
+            /*if (alfa >= 0.001 and last_err[1] - last_err[0] < e_thr and last_err[2] - last_err[1] < e_thr)
+            {
+        	alfa *= 0.66;
+        	e_thr *= 0.66;
+	    }
+	    if (alfa <= 0.001) break;*/
         }
-        //save_factors();
-    /*}
-    else
-    {
-        binfile.open(QFile::ReadOnly);
-        QDataStream bin(&binfile);
-        bin >> user_factors;
-        binfile.close();
 
-        QFile binfile2(file_name.replace("user", "item") + ".bin");
-        binfile2.open(QFile::ReadOnly);
-        QDataStream bin2(&binfile2);
-        bin2 >> item_factors;
-        binfile2.close();
-    }*/
     if (verbose) printf("ok (min error %2.2f on %d step)\n", min_err, min_err_step);
     return min_err;
 }
@@ -313,7 +305,7 @@ void save_factors() {
     printf("ok\n");
 }
 
-RsHash binsvd_pred::predict(RsHash valid, bool verbose)
+RsHash binsvd_pred::predict(RsHash valid, bool verbose, bool save_to_file)
 {
     if (verbose) printf("Binsvd predicting...\n");
 
@@ -350,10 +342,39 @@ RsHash binsvd_pred::predict(RsHash valid, bool verbose)
         if (verbose) printf("%3.3f %% complited\r", float(n) / users_n * 100);
     }
     valid = new_valid;
-
+    
+    if (save_to_file) save_predictions(valid);
+    
     if (verbose) printf("ok\n");
 
     return valid;
+}
+
+void binsvd_pred::save_predictions(RsHash valid)
+{
+    QString fn = "../../binsvd_preds.txt";
+    printf("Saving predictions to %s file... ", qPrintable(fn));
+
+    QFile file(fn);
+    file.open(QFile::WriteOnly);
+    QTextStream st(&file);
+
+    for (RsHash::const_iterator it = valid.begin(); it != valid.end(); it++)
+    {
+	int u = it.key();
+        st << u << "|6\n";
+
+        QHash<int, float> u_rs = it.value();
+        QHash<int, float>::const_iterator it2;
+        for (it2 = u_rs.begin(); it2 != u_rs.end(); it2++)
+    	{
+            int i = it2.key();
+            float r = it2.value();
+    	    st << i << "\t" << r << "\n";
+        }
+    }
+    file.close();
+    printf("ok\n");
 }
 
 // tmp

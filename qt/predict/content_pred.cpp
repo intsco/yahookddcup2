@@ -25,8 +25,8 @@ void get_alb_art_avg_r(QHash<int, float> u_rs, TaxHash tracks, int alb, int art,
         avg_art_r /= art_r_n;
 }
 
-void content_pred::predict(RsHash train, RsHash &valid, TaxHash tracks, float param, bool verbose) {
-    if (verbose) printf("Predicting users ratings... ");
+RsHash content_pred::predict(RsHash train, RsHash valid, TaxHash tracks, float param, bool verbose) {
+    if (verbose) printf("Predicting users ratings with content predictor\n");
 
     // track without taxonomy info default rating
     float default_r = param;
@@ -65,9 +65,14 @@ void content_pred::predict(RsHash train, RsHash &valid, TaxHash tracks, float pa
         }
     }
     if (verbose) printf("OK\n");
+    return valid;
 }
 
-
+double content_pred::study(RsHash train, RsHash valid, TaxHash tracks, QString train_fn, QString valid_fn, QList<float> params, bool)
+{
+    double err = estimate(predict(train, valid, tracks, params[0], false), valid_fn, false);
+    return err;
+}
 
 
 
