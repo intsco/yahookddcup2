@@ -11,25 +11,28 @@ RsHash load_set(QString fileName, int set) {
         file.open(QFile::ReadOnly);
         QTextStream in(&file);
 
-        int u = 0, i = 0, r = 0;
+        int u = 0, i = 0;
+        float r = 0;
         QStringList list;
         while (!in.atEnd()) {
             QString line = in.readLine();
-//            printf(qPrintable(line+'\n'));
-            if (line.contains('|')) {
-                list = line.split('|');
-                u = list.at(0).toInt();
-                QHash<int, float> rs;
-                users_rs.insert(u, rs);
-            }
-            else {
-                list = line.split('\t');
-                i = list.at(0).toInt();
-                if (set == VALID or set == TEST)
-                    r = 0;
-                else
-                    r = list.at(1).toInt();
-                users_rs[u].insert(i, r);
+            if (line.simplified().length() > 0)
+            {
+                if (line.contains('|')) {
+                    list = line.split('|');
+                    u = list.at(0).toInt();
+                    QHash<int, float> rs;
+                    users_rs.insert(u, rs);
+                }
+                else {
+                    list = line.split('\t');
+                    i = list.at(0).toInt();
+                    if (set == VALID or set == TEST)
+                        r = 0;
+                    else
+                        r = list.at(1).toFloat();
+                    users_rs[u].insert(i, r);
+                }
             }
         }
         file.close();

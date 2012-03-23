@@ -2,7 +2,7 @@
 
 QHash<QPair<int, int>, float> i2i_weights;
 
-void itemnn_pred::study(RsHash train, bool verbose) {
+double itemnn_pred::study(RsHash train, RsHash valid, QString valid_fn, bool verbose) {
     if (verbose) printf("Studing item NN ...\n");
 
     QFile binfile("../../tmp_i2i_weights_all.bin");
@@ -150,9 +150,12 @@ void itemnn_pred::study(RsHash train, bool verbose) {
     }*/
 
     if (verbose) printf("OK %d items * N neighbours loaded\n", i2i_weights.size());
+
+    // predict and estimate
+    return estimate(predict(train, valid, 0, true), valid_fn, "../../itemnn_pred", true);
 }
 
-void itemnn_pred::predict(RsHash train, RsHash &valid, float p, bool verbose) {
+RsHash itemnn_pred::predict(RsHash train, RsHash valid, float p, bool verbose) {
     if (verbose) printf("Predicting (item nn)... \n");
 
     RsHash new_valid(valid);
@@ -186,12 +189,12 @@ void itemnn_pred::predict(RsHash train, RsHash &valid, float p, bool verbose) {
             QListIterator< QPair<int, float> > nit(most_sim_neighb);
             int k = 0;
 	    while(nit.hasNext() && k < 50) {
-		QPair<int, float> neighb_w = nit.next();
-		int j = neighb_w.first;
-		float w = neighb_w.second;
-		if (w > 0)
-		    r += w * pow(1 + u_rs[j], p);
-		k++;
+            QPair<int, float> neighb_w = nit.next();
+            int j = neighb_w.first;
+            float w = neighb_w.second;
+            if (w > 0)
+                r += w * pow(1 + u_rs[j], p);
+            k++;
 	    }
             
             new_valid[u][i] = r;
@@ -201,6 +204,7 @@ void itemnn_pred::predict(RsHash train, RsHash &valid, float p, bool verbose) {
     valid = new_valid;
     
     if (verbose) printf("\nOK\n");
+    return valid;
 }
 
 RsHash itemnn_pred::get_predictions(RsHash train, RsHash &valid, float p) {

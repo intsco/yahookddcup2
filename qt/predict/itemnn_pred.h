@@ -1,11 +1,12 @@
-#include "core.h"
-
 #ifndef ITEMNN_PRED_H
 #define ITEMNN_PRED_H
 
+#include "core.h"
+#include "estimate.h"
+
 namespace itemnn_pred {
-    void study(RsHash train, bool verbose);
-    void predict(RsHash train, RsHash &valid, float p, bool verbose);
+    double study(RsHash train, RsHash valid, QString valid_fn, bool verbose);
+    RsHash predict(RsHash train, RsHash valid, float p, bool verbose);
     RsHash get_predictions(RsHash train, RsHash &valid, float p);
 }
 
