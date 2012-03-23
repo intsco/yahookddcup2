@@ -19,7 +19,7 @@ void optimize_bf(RsHash train, RsHash &valid, QString valid_file,
         alfa += step;
         n++;
         //content_pred::predict(train, valid, tracks, alfa, false);
-        err = estimate(get_pred(train, valid, alfa), valid_file, false);
+        err = estimate(get_pred(train, valid, alfa), valid_file, "", false);
         printf("n = %d  alfa = %1.4f   err = %3.4f\n", n, alfa, err*100);
         if (err < minerr) {
             minerr = err;
@@ -33,7 +33,7 @@ void optimize_bf(RsHash train, RsHash &valid, QString valid_file,
 
 // the golden section optimization (1-Dim)
 void optimize_gsect(RsHash train, RsHash valid, TaxHash tracks, QString train_neg_fn, QString valid_fn,
-                    double study(RsHash, RsHash, TaxHash tracks, QString, QString, QList<float>, bool) ) {
+                    double study(RsHash, RsHash, TaxHash, QString, QString, QList<float>, bool) ) {
     printf("Golden section optimizing...\n");
 
     bool verbose = false;
@@ -54,7 +54,7 @@ void optimize_gsect(RsHash train, RsHash valid, TaxHash tracks, QString train_ne
     float err2 = study(train, valid, tracks, train_neg_fn, valid_fn, p, verbose);
     printf("gama = %1.4f   err = %3.4f\n", x2, err2);
     
-    while (err > errThr && (b-a) > eps) 
+    while (err > errThr && (b-a) > eps)
     {
         if (err1 > err2) 
         {

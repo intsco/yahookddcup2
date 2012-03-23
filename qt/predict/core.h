@@ -33,4 +33,10 @@ typedef QHashIterator<int, QHash<int, float> > RsHashIter;
 typedef QMutableHashIterator<int, QHash<int, float> > RsHashIterMut;
 typedef QHash<int, QVector<int> > TaxHash;
 
+struct next_less {
+    bool operator()(QPair<int, float> const &a, QPair<int, float> const &b) const {
+        return a.second > b.second;
+    }
+};
+
 #endif // MAIN_H

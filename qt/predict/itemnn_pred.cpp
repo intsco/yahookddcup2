@@ -2,12 +2,6 @@
 
 QHash<QPair<int, int>, float> i2i_weights;
 
-struct next_less {
-    bool operator()(QPair<int, float> const &a, QPair<int, float> const &b) const {
-        return a.second > b.second;
-    }
-};
-
 void itemnn_pred::study(RsHash train, bool verbose) {
     if (verbose) printf("Studing item NN ...\n");
 

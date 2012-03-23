@@ -161,7 +161,7 @@ float dot_product(QVector<float> u_f, QVector<float> i_f, int fact_n)
 
 
 void save_factors();
-RsHash binsvd_pred::predict(RsHash valid, bool verbose, bool);
+RsHash binsvd_pred::predict(RsHash valid, bool verbose);
 
 void check_user_negatives(RsHash, UserRs urs, QVector<int> u_pos, QVector<int> u_neg);
 
@@ -197,7 +197,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
 
             // by users
             QVector<int> users = user_positives.keys().toVector();
-#pragma omp parallel for
+//#pragma omp parallel for
             for(int ui = 0; ui < un; ++ui)
             {
                 int u = users[ui];
@@ -221,8 +221,8 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
                         int i = *it2;
 
 			QVector<float> i_factors;
-#pragma omp critical
-			{
+//#pragma omp critical
+                {
                         i_factors = item_factors[i];
         		}
                         QVector<float> u_factors = user_factors[u];
@@ -246,7 +246,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
                             float item_f = i_factors.value(fi);
                             i_factors[fi] = item_f + alfa * (err * user_f - lambda * item_f);
                         }
-#pragma omp critical
+//#pragma omp critical
                 	{
                         item_factors[i] = i_factors;
 			}
@@ -254,7 +254,7 @@ double binsvd_pred::study(RsHash train, RsHash valid, QString train_neg_fn, QStr
                 }
             }
 
-            double err = estimate(predict(valid, false, false), valid_fn, false);
+            double err = estimate(predict(valid, false), valid_fn, "../../binsvd_pred", false);
 
             if (err < min_err)
             {
@@ -305,7 +305,7 @@ void save_factors() {
     printf("ok\n");
 }
 
-RsHash binsvd_pred::predict(RsHash valid, bool verbose, bool save_to_file)
+RsHash binsvd_pred::predict(RsHash valid, bool verbose)
 {
     if (verbose) printf("Binsvd predicting...\n");
 
@@ -343,38 +343,9 @@ RsHash binsvd_pred::predict(RsHash valid, bool verbose, bool save_to_file)
     }
     valid = new_valid;
     
-    if (save_to_file) save_predictions(valid);
-    
     if (verbose) printf("ok\n");
 
     return valid;
-}
-
-void binsvd_pred::save_predictions(RsHash valid)
-{
-    QString fn = "../../binsvd_preds.txt";
-    printf("Saving predictions to %s file... ", qPrintable(fn));
-
-    QFile file(fn);
-    file.open(QFile::WriteOnly);
-    QTextStream st(&file);
-
-    for (RsHash::const_iterator it = valid.begin(); it != valid.end(); it++)
-    {
-	int u = it.key();
-        st << u << "|6\n";
-
-        QHash<int, float> u_rs = it.value();
-        QHash<int, float>::const_iterator it2;
-        for (it2 = u_rs.begin(); it2 != u_rs.end(); it2++)
-    	{
-            int i = it2.key();
-            float r = it2.value();
-    	    st << i << "\t" << r << "\n";
-        }
-    }
-    file.close();
-    printf("ok\n");
 }
 
 // tmp

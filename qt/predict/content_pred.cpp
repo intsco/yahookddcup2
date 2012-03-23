@@ -68,9 +68,10 @@ RsHash content_pred::predict(RsHash train, RsHash valid, TaxHash tracks, float p
     return valid;
 }
 
-double content_pred::study(RsHash train, RsHash valid, TaxHash tracks, QString train_fn, QString valid_fn, QList<float> params, bool)
+double content_pred::study(RsHash train, RsHash valid, TaxHash tracks,
+                           QString train_fn, QString valid_fn, QList<float> params, bool)
 {
-    double err = estimate(predict(train, valid, tracks, params[0], false), valid_fn, false);
+    double err = estimate(predict(train, valid, tracks, params[0], false), valid_fn, "../content_pred", false);
     return err;
 }
 

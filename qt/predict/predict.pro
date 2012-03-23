@@ -25,7 +25,8 @@ SOURCES += main.cpp \
     itemnn_pred.cpp \
     check_i2i_weights.cpp \
     binsvd_pred.cpp \
-    loader.cpp
+    loader.cpp \
+    blend_pred.cpp
 
 HEADERS += \
     content_pred.h \
@@ -35,4 +36,5 @@ HEADERS += \
     itemnn_pred.h \
     check_i2i_weights.h \
     binsvd_pred.h \
-    loader.h
+    loader.h \
+    blend_pred.h

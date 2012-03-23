@@ -22,8 +22,37 @@ QVector<QPair<int, float> > get_sorted_items(QHash<int, float> rs) {
     return items_rs;
 }
 
-double estimate(RsHash valid, QString valid_fn, bool verbose) {
+void save_predictions(RsHash valid, QString fn)
+{
+    printf("Saving predictions to %s.txt file... ", qPrintable(fn));
+
+    QFile file(fn + ".txt");
+    file.open(QFile::WriteOnly);
+    QTextStream st(&file);
+
+    for (RsHash::const_iterator it = valid.begin(); it != valid.end(); it++)
+    {
+        int u = it.key();
+        st << u << "|6\n";
+
+        QHash<int, float> u_rs = it.value();
+        QHash<int, float>::const_iterator it2;
+        for (it2 = u_rs.begin(); it2 != u_rs.end(); it2++)
+        {
+            int i = it2.key();
+            float r = it2.value();
+            st << i << "\t" << r << "\n";
+        }
+    }
+    file.close();
+    printf("ok\n");
+}
+
+double estimate(RsHash valid, QString valid_fn, QString save_pred_fn, bool verbose) {
     if (verbose) printf("Estimating prediction results...\n");
+
+    // save predictions
+    if (save_pred_fn.length() > 0) save_predictions(valid, save_pred_fn);
 
     // iterate through users
     RsHashIterMut it(valid);
