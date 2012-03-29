@@ -45,10 +45,10 @@ int main(int argc, char* argv[])
 
         if (QString::fromAscii(argv[3]) == "study")
         {
-//            estimate(content_pred::predict(train, valid, tracks, 22,  true),
-//                     valid_fn, "../../content_pred", true);
+            estimate(content_pred::predict(train, valid, tracks, 22,  true),
+                     valid_fn, "../../content_pred", true);
 
-            itemnn_pred::study(train, valid, valid_fn, true);
+//            itemnn_pred::study(train, valid, valid_fn, true);
 
     //        binsvd_pred::study(train, valid, negatives_train_file, valid_fn, QList<float>(), true);
     //        estimate(binsvd_pred::predict(valid, true, true), valid_fn, true);

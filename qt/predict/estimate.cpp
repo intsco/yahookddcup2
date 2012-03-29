@@ -1,12 +1,17 @@
 #include "estimate.h"
 
-struct prev {
+struct prev_less {
     bool operator()(QPair<int, float> const &a, QPair<int, float> const &b) const {
         return a.second < b.second;
     }
 };
+struct prev_more {
+    bool operator()(QPair<int, float> const &a, QPair<int, float> const &b) const {
+        return a.second > b.second;
+    }
+};
 
-QVector<QPair<int, float> > get_sorted_items(QHash<int, float> rs) {
+QVector<QPair<int, float> > get_sorted_items(QHash<int, float> rs, bool desc) {
     QVector<QPair<int, float> > items_rs;
     QHashIterator<int, float> it(rs);
     while (it.hasNext()) {
@@ -17,7 +22,10 @@ QVector<QPair<int, float> > get_sorted_items(QHash<int, float> rs) {
         items_rs.append(item_r);
     }
 
-    std::sort(items_rs.begin(), items_rs.end(), prev());
+    if (desc)
+        std::sort(items_rs.begin(), items_rs.end(), prev_more());
+    else
+        std::sort(items_rs.begin(), items_rs.end(), prev_less());
 
     return items_rs;
 }
@@ -36,19 +44,23 @@ void save_predictions(RsHash valid, QString fn)
         st << u << "|6\n";
 
         QHash<int, float> u_rs = it.value();
-        QHash<int, float>::const_iterator it2;
-        for (it2 = u_rs.begin(); it2 != u_rs.end(); it2++)
+        QVector< QPair<int, float> > sort_rs = get_sorted_items(u_rs, false);
+        QVector< QPair<int, float> >::const_iterator it2;
+        int rank = 1;
+        for (it2 = sort_rs.begin(); it2 != sort_rs.end(); it2++)
         {
-            int i = it2.key();
-            float r = it2.value();
+            int i = (*it2).first;
+            float r = rank;
             st << i << "\t" << r << "\n";
+            rank++;
         }
     }
     file.close();
     printf("ok\n");
 }
 
-double estimate(RsHash valid, QString valid_fn, QString save_pred_fn, bool verbose) {
+double estimate(RsHash valid, QString valid_fn, QString save_pred_fn, bool verbose)
+{
     if (verbose) printf("Estimating prediction results...\n");
 
     // save predictions
@@ -56,42 +68,52 @@ double estimate(RsHash valid, QString valid_fn, QString save_pred_fn, bool verbo
 
     // iterate through users
     RsHashIterMut it(valid);
-    while (it.hasNext()) {
+    while (it.hasNext())
+    {
         it.next();
         /*QHash<int, float>::const_iterator iter;
         for (iter = it.value().begin(); iter != it.value().end(); ++iter)
             printf("%d  %f\n", iter.key(), iter.value());*/
 
         // classifing predictions into 2 groups
-        QVector<QPair<int, float> > sort_items = get_sorted_items(it.value());
-        for (int j = 0; j < 3; j++) {
+        QVector<QPair<int, float> > sort_items = get_sorted_items(it.value(), false);
+        for (int j = 0; j < 6; j++)
+        {
             int i = sort_items[j].first;
-            it.value().insert(i, -1);
+            if (j < 3)
+                it.value().insert(i, -1);
+            else
+                it.value().insert(i, 1);
         }
     }
 
     double err = 0;
-    int n = 0, u = 0, i = 0, real_r = 0, pred_r = 0;
+    int n = 0, u = 0, i = 0;
+    float real_r = 0, pred_r = 0;
 
     // comparing prediction results and real data from the file
     QFile file(valid_fn + ".txt");
     file.open(QFile::ReadOnly);
     QTextStream in(&file);
-    while (!in.atEnd()) {
+    while (!in.atEnd())
+    {
         QString line = in.readLine();
         QStringList list;
-        if (line.contains("|")) {
+        if (line.contains("|"))
+        {
             list = line.split("|");
             u = list[0].toInt();
         }
-        else {
+        else
+        {
             list = line.split("\t");
             i = list[0].toInt();
-            real_r = list[1].toInt();
-            pred_r = ((valid)[u])[i];
-            if (real_r >= 0) real_r = 1;
-            if (pred_r >= 0) pred_r = 1;
-            if (real_r != pred_r) {
+            real_r = list[1].toFloat();
+            pred_r = valid[u][i];
+            if (real_r != -1) real_r = 1;
+            if (pred_r != -1) pred_r = 1;
+            if (real_r != pred_r)
+            {
                 err += 1;
             }
             n += 1;
